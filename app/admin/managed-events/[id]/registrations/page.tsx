@@ -488,12 +488,18 @@ export default function RegistrationsPage() {
 
   function handleExportCSV() {
     if (registrations.length === 0) return;
-    const headers = ["#", "Name", "Email", "Phone", "Type", "Registered At", "Checked In", "Checked In At"];
+    const userBranchMap = new Map<string, string>();
+    allClientUsers.forEach((u) => {
+      if (u.branch) userBranchMap.set(u.id, u.branch);
+    });
+    const headers = ["#", "User ID", "Name", "Email", "Phone", "Branch", "Type", "Registered At", "Checked In", "Checked In At"];
     const rows = registrations.map((r, i) => [
       String(i + 1),
+      r.userId || "-",
       r.name,
       r.email,
       r.phone || "-",
+      userBranchMap.get(r.userId) || "-",
       r.registrationType,
       r.registeredAt ? formatDate(r.registeredAt) : "-",
       r.isCheckedIn ? "Yes" : "No",

@@ -38,6 +38,7 @@ import type {
   EventType,
 } from "@/lib/types/managed-event";
 import { ManagedEventEditDialog } from "@/components/admin/ManagedEventEditDialog";
+import { SendTicketsDialog } from "@/components/admin/SendTicketsDialog";
 
 const STATUS_COLORS: Record<EventStatus, string> = {
   UPCOMING: "bg-blue-500",
@@ -101,6 +102,10 @@ function ManagedEventsContent() {
   // Edit dialog
   const [formOpen, setFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ManagedEvent | null>(null);
+
+  // Send tickets dialog
+  const [ticketsOpen, setTicketsOpen] = useState(false);
+  const [ticketsEvent, setTicketsEvent] = useState<ManagedEvent | null>(null);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -304,6 +309,14 @@ function ManagedEventsContent() {
         onSaved={() => { closeForm(); fetchEvents(); }}
         createdByEmail={currentUserEmail}
       />
+
+      {ticketsEvent && (
+        <SendTicketsDialog
+          event={ticketsEvent}
+          open={ticketsOpen}
+          onOpenChange={(open) => { setTicketsOpen(open); if (!open) setTicketsEvent(null); }}
+        />
+      )}
     </div>
   );
 
@@ -348,7 +361,7 @@ function ManagedEventsContent() {
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); /* TODO: send tickets */ }}
+                  onClick={(e) => { e.stopPropagation(); setTicketsEvent(event); setTicketsOpen(true); }}
                   className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                   title="Send Tickets via Email"
                 >

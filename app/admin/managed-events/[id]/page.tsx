@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import GoogleLoader from "@/components/GoogleLoader";
 import { ManagedEventEditDialog } from "@/components/admin/ManagedEventEditDialog";
+import { SendTicketsDialog } from "@/components/admin/SendTicketsDialog";
 import type {
   ManagedEvent,
   RegisteredMember,
@@ -96,6 +97,7 @@ export default function ManagedEventDetailPage() {
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
+  const [ticketsOpen, setTicketsOpen] = useState(false);
 
   const fetchEvent = useCallback(async () => {
     try {
@@ -171,7 +173,7 @@ export default function ManagedEventDetailPage() {
             <Button size="sm" variant="outline" onClick={() => router.push(`/admin/managed-events/${eventId}/registrations`)}>
               <ClipboardList className="mr-1.5 h-3.5 w-3.5" /> Registrations
             </Button>
-            <Button size="sm" variant="outline" onClick={() => { /* TODO: send tickets logic */ }}>
+            <Button size="sm" variant="outline" onClick={() => setTicketsOpen(true)}>
               <Mail className="mr-1.5 h-3.5 w-3.5" /> Send Tickets
             </Button>
             <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
@@ -543,6 +545,12 @@ export default function ManagedEventDetailPage() {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onSaved={() => { setEditOpen(false); fetchEvent(); }}
+      />
+
+      <SendTicketsDialog
+        event={event}
+        open={ticketsOpen}
+        onOpenChange={setTicketsOpen}
       />
     </div>
   );
