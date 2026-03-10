@@ -41,10 +41,7 @@ import {
 import GoogleLoader from "@/components/GoogleLoader";
 import { ManagedEventEditDialog } from "@/components/admin/ManagedEventEditDialog";
 import { SendTicketsDialog } from "@/components/admin/SendTicketsDialog";
-import type {
-  ManagedEvent,
-  RegisteredMember,
-} from "@/lib/types/managed-event";
+import type { ManagedEvent, RegisteredMember } from "@/lib/types/managed-event";
 
 const STATUS_COLORS: Record<string, string> = {
   UPCOMING: "bg-blue-500",
@@ -55,9 +52,10 @@ const STATUS_COLORS: Record<string, string> = {
 function parseDate(d: string | null): Date | null {
   if (!d) return null;
   try {
-    const date = typeof d === "object" && (d as any)?._seconds
-      ? new Date((d as any)._seconds * 1000)
-      : new Date(d);
+    const date =
+      typeof d === "object" && (d as any)?._seconds
+        ? new Date((d as any)._seconds * 1000)
+        : new Date(d);
     return isNaN(date.getTime()) ? null : date;
   } catch {
     return null;
@@ -117,11 +115,15 @@ export default function ManagedEventDetailPage() {
 
   const fetchRegCounts = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/managed-events/${eventId}/registrations`);
+      const res = await fetch(
+        `/api/admin/managed-events/${eventId}/registrations`,
+      );
       const data = await res.json();
       if (Array.isArray(data)) {
         setRegCount(data.length);
-        setCheckedInCount(data.filter((r: RegisteredMember) => r.isCheckedIn).length);
+        setCheckedInCount(
+          data.filter((r: RegisteredMember) => r.isCheckedIn).length,
+        );
       }
     } catch {
       console.error("Failed to load registrations");
@@ -137,7 +139,9 @@ export default function ManagedEventDetailPage() {
   if (error || !event) {
     return (
       <div className="flex flex-col items-center justify-center h-96">
-        <p className="text-xl text-muted-foreground">{error || "Event not found"}</p>
+        <p className="text-xl text-muted-foreground">
+          {error || "Event not found"}
+        </p>
         <Button
           variant="ghost"
           className="mt-4"
@@ -151,7 +155,7 @@ export default function ManagedEventDetailPage() {
 
   // Computed eligibility display
   const eligibleYears = (event.eligibilityCriteria?.yearOfGrad ?? [])
-    .map((allowed: boolean, i: number) => allowed ? `Year ${i + 1}` : null)
+    .map((allowed: boolean, i: number) => (allowed ? `Year ${i + 1}` : null))
     .filter(Boolean) as string[];
   const eligibleDepts = event.eligibilityCriteria?.Dept ?? [];
 
@@ -160,7 +164,6 @@ export default function ManagedEventDetailPage() {
       <PageHeader title={event.title} />
 
       <div className="flex-1 p-6 space-y-0">
-
         {/* ── Nav bar ── */}
         <div className="flex items-center justify-between mb-5">
           <button
@@ -170,13 +173,27 @@ export default function ManagedEventDetailPage() {
             <ArrowLeft className="h-3.5 w-3.5" /> All Events
           </button>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => router.push(`/admin/managed-events/${eventId}/registrations`)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                router.push(`/admin/managed-events/${eventId}/registrations`)
+              }
+            >
               <ClipboardList className="mr-1.5 h-3.5 w-3.5" /> Registrations
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setTicketsOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setTicketsOpen(true)}
+            >
               <Mail className="mr-1.5 h-3.5 w-3.5" /> Send Tickets
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setEditOpen(true)}
+            >
               <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
             </Button>
           </div>
@@ -195,7 +212,10 @@ export default function ManagedEventDetailPage() {
               />
             </div>
           ) : (
-            <div className="w-full bg-muted/30 flex items-center justify-center text-xs text-muted-foreground/50" style={{ aspectRatio: "16 / 9", maxHeight: "320px" }}>
+            <div
+              className="w-full bg-muted/30 flex items-center justify-center text-xs text-muted-foreground/50"
+              style={{ aspectRatio: "16 / 9", maxHeight: "320px" }}
+            >
               No banner image
             </div>
           )}
@@ -215,20 +235,34 @@ export default function ManagedEventDetailPage() {
               )}
 
               {/* Title + badges */}
-              <div className={`flex-1 min-w-0 ${event.posterImage ? "" : "pt-0"}`}>
+              <div
+                className={`flex-1 min-w-0 ${event.posterImage ? "" : "pt-0"}`}
+              >
                 <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide text-white ${STATUS_COLORS[event.status] || "bg-zinc-500"}`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide text-white ${STATUS_COLORS[event.status] || "bg-zinc-500"}`}
+                  >
                     {event.status}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border">{event.eventType}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border">{event.mode}</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                    {event.eventType}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                    {event.mode}
+                  </span>
                   {event.isRegistrationOpen && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">REG OPEN</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                      REG OPEN
+                    </span>
                   )}
                 </div>
-                <h1 className="text-lg sm:text-xl font-bold leading-tight">{event.title}</h1>
+                <h1 className="text-lg sm:text-xl font-bold leading-tight">
+                  {event.title}
+                </h1>
                 {event.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed mt-1.5">{event.description}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-1.5">
+                    {event.description}
+                  </p>
                 )}
               </div>
             </div>
@@ -238,20 +272,51 @@ export default function ManagedEventDetailPage() {
         {/* ── Inline stat bar ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
           {[
-            { icon: Calendar, label: "Starts", value: formatDateTime(event.startDate), color: "text-primary", bg: "bg-primary/8" },
-            { icon: CalendarClock, label: "Ends", value: formatDateTime(event.endDate), color: "text-violet-500", bg: "bg-violet-500/8" },
-            { icon: MapPin,    label: "Venue",  value: event.venue || "TBD",         color: "text-sky-500", bg: "bg-sky-500/8" },
-            { icon: Users,     label: "Mode / Type",
+            {
+              icon: Calendar,
+              label: "Starts",
+              value: formatDateTime(event.startDate),
+              color: "text-primary",
+              bg: "bg-primary/8",
+            },
+            {
+              icon: CalendarClock,
+              label: "Ends",
+              value: formatDateTime(event.endDate),
+              color: "text-violet-500",
+              bg: "bg-violet-500/8",
+            },
+            {
+              icon: MapPin,
+              label: "Venue",
+              value: event.venue || "TBD",
+              color: "text-sky-500",
+              bg: "bg-sky-500/8",
+            },
+            {
+              icon: Users,
+              label: "Mode / Type",
               value: `${event.mode} · ${event.eventType}`,
-              color: "text-emerald-500", bg: "bg-emerald-500/8" },
+              color: "text-emerald-500",
+              bg: "bg-emerald-500/8",
+            },
           ].map(({ icon: Icon, label, value, color, bg }) => (
-            <div key={label} className="flex items-center gap-2.5 rounded-xl border border-border px-3.5 py-3 bg-card">
-              <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
+            <div
+              key={label}
+              className="flex items-center gap-2.5 rounded-xl border border-border px-3.5 py-3 bg-card"
+            >
+              <div
+                className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}
+              >
                 <Icon className={`w-3.5 h-3.5 ${color}`} />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
-                <p className="text-sm font-semibold leading-tight truncate">{value}</p>
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  {label}
+                </p>
+                <p className="text-sm font-semibold leading-tight truncate">
+                  {value}
+                </p>
               </div>
             </div>
           ))}
@@ -262,14 +327,17 @@ export default function ManagedEventDetailPage() {
           <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                  event.isRegistrationOpen
-                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                    : "bg-muted-foreground/30"
-                }`} />
+                <div
+                  className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                    event.isRegistrationOpen
+                      ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                      : "bg-muted-foreground/30"
+                  }`}
+                />
                 <div>
                   <p className="text-sm font-semibold">
-                    Registration is {event.isRegistrationOpen ? "Open" : "Closed"}
+                    Registration is{" "}
+                    {event.isRegistrationOpen ? "Open" : "Closed"}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {event.registrationStart && event.registrationEnd
@@ -287,21 +355,30 @@ export default function ManagedEventDetailPage() {
                   <Users className="w-3.5 h-3.5 text-primary" />
                   <span className="font-semibold tabular-nums">{regCount}</span>
                   {event.maxParticipants > 0 && (
-                    <span className="text-muted-foreground text-xs">/ {event.maxParticipants}</span>
+                    <span className="text-muted-foreground text-xs">
+                      / {event.maxParticipants}
+                    </span>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="font-semibold tabular-nums">{checkedInCount}</span>
-                  <span className="text-muted-foreground text-xs">checked in</span>
+                  <span className="font-semibold tabular-nums">
+                    {checkedInCount}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    checked in
+                  </span>
                 </div>
               </div>
               <Button
                 size="sm"
                 className="h-8 text-xs shrink-0"
-                onClick={() => router.push(`/admin/managed-events/${eventId}/registrations`)}
+                onClick={() =>
+                  router.push(`/admin/managed-events/${eventId}/registrations`)
+                }
               >
-                <ClipboardList className="mr-1.5 h-3.5 w-3.5" /> Manage Registrations
+                <ClipboardList className="mr-1.5 h-3.5 w-3.5" /> Manage
+                Registrations
               </Button>
             </div>
           </div>
@@ -309,27 +386,46 @@ export default function ManagedEventDetailPage() {
 
         {/* ── Main content ── */}
         <div className="grid gap-5 lg:grid-cols-3">
-
           {/* LEFT: meta cards */}
           <div className="lg:col-span-1 space-y-4">
-
             {/* Event Details */}
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-center gap-2">
                 <Info className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Event Details</span>
+                <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                  Event Details
+                </span>
               </div>
               <div className="divide-y divide-border">
-                {([
-                  ["Type",            event.eventType],
-                  ["Mode",            event.mode],
-                  ["Max Capacity",    event.maxParticipants ? String(event.maxParticipants) : "Unlimited"],
-                  ["Created By",      event.createdBy || "–"],
-                  ["Event Start",     formatDateTime(event.startDate)],
-                  ...(event.endDate ? [["Event End", formatDateTime(event.endDate)] as [string, string]] : []),
-                ] as [string, string][]).map(([k, v]) => (
-                  <div key={k} className="flex items-start justify-between gap-3 px-4 py-2.5 text-sm">
-                    <span className="text-muted-foreground text-xs flex-shrink-0">{k}</span>
+                {(
+                  [
+                    ["Type", event.eventType],
+                    ["Mode", event.mode],
+                    [
+                      "Max Capacity",
+                      event.maxParticipants
+                        ? String(event.maxParticipants)
+                        : "Unlimited",
+                    ],
+                    ["Created By", event.createdBy || "–"],
+                    ["Event Start", formatDateTime(event.startDate)],
+                    ...(event.endDate
+                      ? [
+                          ["Event End", formatDateTime(event.endDate)] as [
+                            string,
+                            string,
+                          ],
+                        ]
+                      : []),
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="flex items-start justify-between gap-3 px-4 py-2.5 text-sm"
+                  >
+                    <span className="text-muted-foreground text-xs flex-shrink-0">
+                      {k}
+                    </span>
                     <span className="font-medium text-xs text-right">{v}</span>
                   </div>
                 ))}
@@ -340,17 +436,28 @@ export default function ManagedEventDetailPage() {
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-center gap-2">
                 <UserCheck className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Executive Board</span>
+                <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                  Executive Board
+                </span>
               </div>
               <div className="divide-y divide-border">
-                {([
-                  ["Organiser",     event.executiveBoard?.organiser],
-                  ["Co-Organiser",  event.executiveBoard?.coOrganiser],
-                  ["Facilitator",   event.executiveBoard?.facilitator],
-                ] as [string, string][]).map(([k, v]) => (
-                  <div key={k} className="flex items-start justify-between gap-3 px-4 py-2.5">
-                    <span className="text-muted-foreground text-xs flex-shrink-0">{k}</span>
-                    <span className="font-medium text-xs text-right">{v || "–"}</span>
+                {(
+                  [
+                    ["Organiser", event.executiveBoard?.organiser],
+                    ["Co-Organiser", event.executiveBoard?.coOrganiser],
+                    ["Facilitator", event.executiveBoard?.facilitator],
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="flex items-start justify-between gap-3 px-4 py-2.5"
+                  >
+                    <span className="text-muted-foreground text-xs flex-shrink-0">
+                      {k}
+                    </span>
+                    <span className="font-medium text-xs text-right">
+                      {v || "–"}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -361,25 +468,41 @@ export default function ManagedEventDetailPage() {
               <div className="rounded-xl border border-border bg-card overflow-hidden">
                 <div className="px-4 py-3 border-b border-border flex items-center gap-2">
                   <GraduationCap className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Eligibility</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                    Eligibility
+                  </span>
                 </div>
                 <div className="px-4 py-3 space-y-3">
                   {eligibleYears.length > 0 && (
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wide">Years</p>
+                      <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wide">
+                        Years
+                      </p>
                       <div className="flex flex-wrap gap-1">
                         {eligibleYears.map((y) => (
-                          <span key={y} className="px-2 py-0.5 text-[11px] font-medium rounded-md bg-primary/10 text-primary border border-primary/20">{y}</span>
+                          <span
+                            key={y}
+                            className="px-2 py-0.5 text-[11px] font-medium rounded-md bg-primary/10 text-primary border border-primary/20"
+                          >
+                            {y}
+                          </span>
                         ))}
                       </div>
                     </div>
                   )}
                   {eligibleDepts.length > 0 && (
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wide">Departments</p>
+                      <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wide">
+                        Departments
+                      </p>
                       <div className="flex flex-wrap gap-1">
                         {eligibleDepts.map((d: string) => (
-                          <span key={d} className="px-2 py-0.5 text-[11px] font-medium rounded-md border border-border text-muted-foreground">{d.replace(/&/g, "")}</span>
+                          <span
+                            key={d}
+                            className="px-2 py-0.5 text-[11px] font-medium rounded-md border border-border text-muted-foreground"
+                          >
+                            {d.replace(/&/g, "")}
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -393,25 +516,41 @@ export default function ManagedEventDetailPage() {
               <div className="rounded-xl border border-border bg-card overflow-hidden">
                 <div className="px-4 py-3 border-b border-border flex items-center gap-2">
                   <Hash className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Tags & Highlights</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                    Tags & Highlights
+                  </span>
                 </div>
                 <div className="px-4 py-3 space-y-3">
                   {event.tags?.length > 0 && (
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wide flex items-center gap-1"><Tag className="w-3 h-3" /> Tags</p>
+                      <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wide flex items-center gap-1">
+                        <Tag className="w-3 h-3" /> Tags
+                      </p>
                       <div className="flex flex-wrap gap-1">
                         {event.tags.map((t: string) => (
-                          <span key={t} className="px-2 py-0.5 text-[11px] rounded-md bg-muted text-muted-foreground">{t}</span>
+                          <span
+                            key={t}
+                            className="px-2 py-0.5 text-[11px] rounded-md bg-muted text-muted-foreground"
+                          >
+                            {t}
+                          </span>
                         ))}
                       </div>
                     </div>
                   )}
                   {event.keyHighlights?.length > 0 && (
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wide flex items-center gap-1"><Star className="w-3 h-3" /> Highlights</p>
+                      <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wide flex items-center gap-1">
+                        <Star className="w-3 h-3" /> Highlights
+                      </p>
                       <div className="flex flex-wrap gap-1">
                         {event.keyHighlights.map((h: string) => (
-                          <span key={h} className="px-2 py-0.5 text-[11px] rounded-md border border-border text-muted-foreground">{h}</span>
+                          <span
+                            key={h}
+                            className="px-2 py-0.5 text-[11px] rounded-md border border-border text-muted-foreground"
+                          >
+                            {h}
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -425,7 +564,9 @@ export default function ManagedEventDetailPage() {
               <div className="rounded-xl border border-border bg-card overflow-hidden">
                 <div className="px-4 py-3 border-b border-border flex items-center gap-2">
                   <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Theme Colors</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                    Theme Colors
+                  </span>
                 </div>
                 <div className="px-4 py-3">
                   <div className="flex flex-wrap gap-2">
@@ -436,7 +577,9 @@ export default function ManagedEventDetailPage() {
                           style={{ backgroundColor: color }}
                           title={color}
                         />
-                        <span className="text-[9px] font-mono text-muted-foreground">{color}</span>
+                        <span className="text-[9px] font-mono text-muted-foreground">
+                          {color}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -445,18 +588,24 @@ export default function ManagedEventDetailPage() {
             )}
           </div>
           <div className="lg:col-span-2 space-y-4">
-
             {/* Officials */}
             {event.eventOfficials?.length > 0 && (
               <div className="rounded-xl border border-border bg-card overflow-hidden">
                 <div className="px-5 py-3 border-b border-border flex items-center gap-2">
                   <Mic className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Officials</span>
-                  <span className="ml-auto text-[11px] text-muted-foreground">{event.eventOfficials.length} total</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                    Officials
+                  </span>
+                  <span className="ml-auto text-[11px] text-muted-foreground">
+                    {event.eventOfficials.length} total
+                  </span>
                 </div>
                 <div className="p-4 grid gap-3 sm:grid-cols-2">
                   {event.eventOfficials.map((off: any, i: number) => (
-                    <div key={i} className="flex gap-3 p-3.5 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition-colors">
+                    <div
+                      key={i}
+                      className="flex gap-3 p-3.5 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition-colors"
+                    >
                       {/* Avatar */}
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-border flex items-center justify-center flex-shrink-0 text-sm font-bold text-primary">
                         {off.name?.charAt(0).toUpperCase() || "?"}
@@ -464,29 +613,53 @@ export default function ManagedEventDetailPage() {
                       {/* Info */}
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-sm leading-tight">{off.name}</p>
-                          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-primary/10 text-primary border border-primary/15">{off.role}</span>
+                          <p className="font-semibold text-sm leading-tight">
+                            {off.name}
+                          </p>
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-primary/10 text-primary border border-primary/15">
+                            {off.role}
+                          </span>
                         </div>
                         {off.expertise && (
-                          <p className="text-xs text-muted-foreground">{off.expertise}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {off.expertise}
+                          </p>
                         )}
                         {off.bio && (
-                          <p className="text-xs text-muted-foreground leading-relaxed">{off.bio}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {off.bio}
+                          </p>
                         )}
                         <div className="flex flex-wrap items-center gap-3 pt-0.5">
                           {off.email && (
-                            <a href={`mailto:${off.email}`} className="text-[11px] text-primary hover:underline flex items-center gap-1">
-                              <Mail className="w-3 h-3" />{off.email}
+                            <a
+                              href={`mailto:${off.email}`}
+                              className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                            >
+                              <Mail className="w-3 h-3" />
+                              {off.email}
                             </a>
                           )}
                           {off.profileUrl && (
-                            <a href={off.profileUrl} target="_blank" rel="noreferrer" className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                              <Globe className="w-3 h-3" />Profile
+                            <a
+                              href={off.profileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                            >
+                              <Globe className="w-3 h-3" />
+                              Profile
                             </a>
                           )}
                           {off.linkedinUrl && (
-                            <a href={off.linkedinUrl} target="_blank" rel="noreferrer" className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                              <Linkedin className="w-3 h-3" />LinkedIn
+                            <a
+                              href={off.linkedinUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                            >
+                              <Linkedin className="w-3 h-3" />
+                              LinkedIn
                             </a>
                           )}
                         </div>
@@ -502,14 +675,22 @@ export default function ManagedEventDetailPage() {
               <div className="rounded-xl border border-border bg-card overflow-hidden">
                 <div className="px-5 py-3 border-b border-border flex items-center gap-2">
                   <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">FAQs</span>
-                  <span className="ml-auto text-[11px] text-muted-foreground">{event.faqs.length} questions</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                    FAQs
+                  </span>
+                  <span className="ml-auto text-[11px] text-muted-foreground">
+                    {event.faqs.length} questions
+                  </span>
                 </div>
                 <div className="divide-y divide-border">
                   {event.faqs.map((faq: any, i: number) => (
                     <div key={i} className="px-5 py-3.5">
-                      <p className="text-sm font-semibold text-foreground mb-1">{faq.question}</p>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
+                      <p className="text-sm font-semibold text-foreground mb-1">
+                        {faq.question}
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {faq.answer}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -521,30 +702,39 @@ export default function ManagedEventDetailPage() {
               <div className="rounded-xl border border-border bg-card overflow-hidden">
                 <div className="px-5 py-3 border-b border-border flex items-center gap-2">
                   <Shield className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Rules</span>
-                  <span className="ml-auto text-[11px] text-muted-foreground">{event.rules.length} rules</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                    Rules
+                  </span>
+                  <span className="ml-auto text-[11px] text-muted-foreground">
+                    {event.rules.length} rules
+                  </span>
                 </div>
                 <ol className="divide-y divide-border">
                   {event.rules.map((r: any, i: number) => (
                     <li key={i} className="flex gap-3 px-5 py-3">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground mt-0.5">{i + 1}</span>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{r.rule}</p>
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground mt-0.5">
+                        {i + 1}
+                      </span>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {r.rule}
+                      </p>
                     </li>
                   ))}
                 </ol>
               </div>
             )}
-
           </div>
         </div>
-
       </div>
 
       <ManagedEventEditDialog
         event={event}
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        onSaved={() => { setEditOpen(false); fetchEvent(); }}
+        onSaved={() => {
+          setEditOpen(false);
+          fetchEvent();
+        }}
       />
 
       <SendTicketsDialog
@@ -555,4 +745,3 @@ export default function ManagedEventDetailPage() {
     </div>
   );
 }
-

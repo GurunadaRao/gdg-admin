@@ -3,10 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/admin/layout/PageHeader";
-import {
-  Card,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,13 +48,13 @@ const STATUS_LABELS: Record<EventStatus, string> = {
   COMPLETED: "Completed",
 };
 
-
 function parseDate(d: string | null): Date | null {
   if (!d) return null;
   try {
-    const date = typeof d === "object" && (d as any)?._seconds
-      ? new Date((d as any)._seconds * 1000)
-      : new Date(d);
+    const date =
+      typeof d === "object" && (d as any)?._seconds
+        ? new Date((d as any)._seconds * 1000)
+        : new Date(d);
     return isNaN(date.getTime()) ? null : date;
   } catch {
     return null;
@@ -83,8 +80,6 @@ function formatDateTime(d: string | null): string {
   const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${day}/${month}/${year}, ${hours}:${minutes}`;
 }
-
-
 
 function ManagedEventsContent() {
   const router = useRouter();
@@ -124,7 +119,9 @@ function ManagedEventsContent() {
     fetchEvents();
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((d) => { if (d.authenticated && d.user?.email) setCurrentUserEmail(d.user.email); })
+      .then((d) => {
+        if (d.authenticated && d.user?.email) setCurrentUserEmail(d.user.email);
+      })
       .catch(() => {});
   }, [fetchEvents]);
 
@@ -137,7 +134,7 @@ function ManagedEventsContent() {
       openEdit(target);
       router.replace("/admin/managed-events");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, searchParams]);
 
   /* ──── dialog helpers ──── */
@@ -160,12 +157,18 @@ function ManagedEventsContent() {
   async function handleDelete(eventId: string) {
     setDeletingId(eventId);
     try {
-      const res = await fetch(`/api/admin/managed-events/${eventId}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/managed-events/${eventId}`, {
+        method: "DELETE",
+      });
       if (res.ok) {
         setEvents((prev) => prev.filter((e) => e.eventId !== eventId));
         setConfirmDeleteId(null);
       }
-    } catch { console.error("Delete failed"); } finally { setDeletingId(null); }
+    } catch {
+      console.error("Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   const filteredEvents = events.filter((event) => {
@@ -173,13 +176,18 @@ function ManagedEventsContent() {
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.venue.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "all" || event.status === filterStatus;
+    const matchesStatus =
+      filterStatus === "all" || event.status === filterStatus;
     const matchesType = filterType === "all" || event.eventType === filterType;
     return matchesSearch && matchesStatus && matchesType;
   });
 
   // Sort: Upcoming & Ongoing first, then Completed
-  const STATUS_ORDER: Record<string, number> = { ONGOING: 0, UPCOMING: 1, COMPLETED: 2 };
+  const STATUS_ORDER: Record<string, number> = {
+    ONGOING: 0,
+    UPCOMING: 1,
+    COMPLETED: 2,
+  };
   const sortedEvents = [...filteredEvents].sort(
     (a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9),
   );
@@ -188,10 +196,30 @@ function ManagedEventsContent() {
   const completedEvents = sortedEvents.filter((e) => e.status === "COMPLETED");
 
   const stats = [
-    { title: "Total Events", value: events.length, description: "All managed events", icon: Calendar },
-    { title: "Upcoming", value: events.filter((e) => e.status === "UPCOMING").length, description: "Scheduled events", icon: CalendarPlus },
-    { title: "Ongoing", value: events.filter((e) => e.status === "ONGOING").length, description: "In progress", icon: Clock },
-    { title: "Completed", value: events.filter((e) => e.status === "COMPLETED").length, description: "Past events", icon: CalendarCheck },
+    {
+      title: "Total Events",
+      value: events.length,
+      description: "All managed events",
+      icon: Calendar,
+    },
+    {
+      title: "Upcoming",
+      value: events.filter((e) => e.status === "UPCOMING").length,
+      description: "Scheduled events",
+      icon: CalendarPlus,
+    },
+    {
+      title: "Ongoing",
+      value: events.filter((e) => e.status === "ONGOING").length,
+      description: "In progress",
+      icon: Clock,
+    },
+    {
+      title: "Completed",
+      value: events.filter((e) => e.status === "COMPLETED").length,
+      description: "Past events",
+      icon: CalendarCheck,
+    },
   ];
 
   return (
@@ -201,8 +229,12 @@ function ManagedEventsContent() {
       <div className="flex-1 space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Event Management</h2>
-            <p className="text-muted-foreground">Create and manage community events with registration tracking.</p>
+            <h2 className="text-2xl font-bold tracking-tight">
+              Event Management
+            </h2>
+            <p className="text-muted-foreground">
+              Create and manage community events with registration tracking.
+            </p>
           </div>
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4 mr-2" />
@@ -215,10 +247,15 @@ function ManagedEventsContent() {
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.title} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/40 text-sm">
+              <div
+                key={stat.title}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/40 text-sm"
+              >
                 <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">{stat.title}:</span>
-                <span className="font-semibold text-foreground">{stat.value}</span>
+                <span className="font-semibold text-foreground">
+                  {stat.value}
+                </span>
               </div>
             );
           })}
@@ -228,10 +265,20 @@ function ManagedEventsContent() {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search events by title, description, or venue..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+            <Input
+              placeholder="Search events by title, description, or venue..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
-          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as any)}>
-            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <Select
+            value={filterStatus}
+            onValueChange={(v) => setFilterStatus(v as any)}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="UPCOMING">Upcoming</SelectItem>
@@ -239,8 +286,13 @@ function ManagedEventsContent() {
               <SelectItem value="COMPLETED">Completed</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
-            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Type" /></SelectTrigger>
+          <Select
+            value={filterType}
+            onValueChange={(v) => setFilterType(v as any)}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="WORKSHOP">Workshop</SelectItem>
@@ -257,16 +309,22 @@ function ManagedEventsContent() {
             <Card className="flex items-center justify-center p-12 bg-muted/20 border-dashed">
               <div className="text-center">
                 <CalendarX className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-xl font-medium text-muted-foreground">{error}</p>
+                <p className="text-xl font-medium text-muted-foreground">
+                  {error}
+                </p>
               </div>
             </Card>
           ) : sortedEvents.length === 0 ? (
             <Card className="flex items-center justify-center p-12 bg-muted/20 border-dashed">
               <div className="text-center">
                 <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-                <p className="text-xl font-medium text-muted-foreground">No events found.</p>
+                <p className="text-xl font-medium text-muted-foreground">
+                  No events found.
+                </p>
                 <p className="text-sm text-muted-foreground/60 mt-1">
-                  {searchQuery || filterStatus !== "all" || filterType !== "all" ? "Try adjusting your filters." : "Create your first managed event."}
+                  {searchQuery || filterStatus !== "all" || filterType !== "all"
+                    ? "Try adjusting your filters."
+                    : "Create your first managed event."}
                 </p>
               </div>
             </Card>
@@ -306,7 +364,10 @@ function ManagedEventsContent() {
         event={editingEvent}
         open={formOpen}
         onClose={closeForm}
-        onSaved={() => { closeForm(); fetchEvents(); }}
+        onSaved={() => {
+          closeForm();
+          fetchEvents();
+        }}
         createdByEmail={currentUserEmail}
       />
 
@@ -314,7 +375,10 @@ function ManagedEventsContent() {
         <SendTicketsDialog
           event={ticketsEvent}
           open={ticketsOpen}
-          onOpenChange={(open) => { setTicketsOpen(open); if (!open) setTicketsEvent(null); }}
+          onOpenChange={(open) => {
+            setTicketsOpen(open);
+            if (!open) setTicketsEvent(null);
+          }}
         />
       )}
     </div>
@@ -352,16 +416,26 @@ function ManagedEventsContent() {
               <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-1">
                 {event.title}
               </CardTitle>
-              <div className="flex items-center gap-0.5 flex-shrink-0 -mt-0.5" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="flex items-center gap-0.5 flex-shrink-0 -mt-0.5"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
-                  onClick={(e) => { e.stopPropagation(); openEdit(event); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEdit(event);
+                  }}
                   className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   title="Edit event"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setTicketsEvent(event); setTicketsOpen(true); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTicketsEvent(event);
+                    setTicketsOpen(true);
+                  }}
                   className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                   title="Send Tickets via Email"
                 >
@@ -374,9 +448,18 @@ function ManagedEventsContent() {
                       disabled={deletingId === event.eventId}
                       className="px-2 py-1 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
                     >
-                      {deletingId === event.eventId ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes"}
+                      {deletingId === event.eventId ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        "Yes"
+                      )}
                     </button>
-                    <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground">No</button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      No
+                    </button>
                   </div>
                 ) : (
                   <button
@@ -392,7 +475,9 @@ function ManagedEventsContent() {
 
             {/* Row 2: Badges */}
             <div className="flex items-center gap-1.5 flex-wrap mb-2">
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide text-white ${STATUS_COLORS[event.status] || "bg-zinc-500"}`}>
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide text-white ${STATUS_COLORS[event.status] || "bg-zinc-500"}`}
+              >
                 {STATUS_LABELS[event.status] || event.status}
               </span>
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border">
@@ -434,7 +519,10 @@ function ManagedEventsContent() {
               {event.tags && event.tags.length > 0 && (
                 <div className="flex gap-1 ml-auto">
                   {event.tags.slice(0, 3).map((tag: string) => (
-                    <span key={tag} className="px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[9px] font-semibold uppercase tracking-wider">
+                    <span
+                      key={tag}
+                      className="px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[9px] font-semibold uppercase tracking-wider"
+                    >
                       {tag}
                     </span>
                   ))}

@@ -163,9 +163,10 @@ function DonutRing({
 function parseDate(d: string | null): Date | null {
   if (!d) return null;
   try {
-    const date = typeof d === "object" && (d as any)?._seconds
-      ? new Date((d as any)._seconds * 1000)
-      : new Date(d);
+    const date =
+      typeof d === "object" && (d as any)?._seconds
+        ? new Date((d as any)._seconds * 1000)
+        : new Date(d);
     return isNaN(date.getTime()) ? null : date;
   } catch {
     return null;
@@ -212,18 +213,34 @@ export default function RegistrationsPage() {
 
   // User search for manual registration
   const [allClientUsers, setAllClientUsers] = useState<
-    { id: string; name: string; email: string; phoneNumber: string; branch: string; profileUrl: string }[]
+    {
+      id: string;
+      name: string;
+      email: string;
+      phoneNumber: string;
+      branch: string;
+      profileUrl: string;
+    }[]
   >([]);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{
-    id: string; name: string; email: string; phoneNumber: string; branch: string; profileUrl: string;
+    id: string;
+    name: string;
+    email: string;
+    phoneNumber: string;
+    branch: string;
+    profileUrl: string;
   } | null>(null);
 
   // Search & filters
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "Individual" | "Team">("all");
-  const [checkInFilter, setCheckInFilter] = useState<"all" | "checked-in" | "not-checked-in">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "Individual" | "Team">(
+    "all",
+  );
+  const [checkInFilter, setCheckInFilter] = useState<
+    "all" | "checked-in" | "not-checked-in"
+  >("all");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -231,13 +248,18 @@ export default function RegistrationsPage() {
 
   // Actions
   const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [confirmDeleteRegId, setConfirmDeleteRegId] = useState<string | null>(null);
+  const [confirmDeleteRegId, setConfirmDeleteRegId] = useState<string | null>(
+    null,
+  );
   const [deletingRegId, setDeletingRegId] = useState<string | null>(null);
   const [togglingRegOpen, setTogglingRegOpen] = useState(false);
   const [bulkChecking, setBulkChecking] = useState(false);
+  const [bulkCheckingOut, setBulkCheckingOut] = useState(false);
 
   // Detail dialog
-  const [detailReg, setDetailReg] = useState<(RegisteredMember & { regId: string }) | null>(null);
+  const [detailReg, setDetailReg] = useState<
+    (RegisteredMember & { regId: string }) | null
+  >(null);
   const [detailUser, setDetailUser] = useState<ClientUser | null>(null);
   const [detailUserLoading, setDetailUserLoading] = useState(false);
   const [detailUserError, setDetailUserError] = useState<string | null>(null);
@@ -262,12 +284,15 @@ export default function RegistrationsPage() {
         if (!cancelled) setDetailUser(data);
       })
       .catch((err) => {
-        if (!cancelled) setDetailUserError(err.message || "Failed to fetch user");
+        if (!cancelled)
+          setDetailUserError(err.message || "Failed to fetch user");
       })
       .finally(() => {
         if (!cancelled) setDetailUserLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [detailReg?.userId]);
 
   /* ── Data fetching ── */
@@ -287,7 +312,9 @@ export default function RegistrationsPage() {
 
   const fetchRegistrations = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/managed-events/${eventId}/registrations`);
+      const res = await fetch(
+        `/api/admin/managed-events/${eventId}/registrations`,
+      );
       const data = await res.json();
       if (Array.isArray(data)) setRegistrations(data);
     } catch {
@@ -308,29 +335,35 @@ export default function RegistrationsPage() {
     setLoadingUsers(true);
     fetch("/api/admin/users")
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setAllClientUsers(data); })
+      .then((data) => {
+        if (Array.isArray(data)) setAllClientUsers(data);
+      })
       .catch(() => console.error("Failed to load users"))
       .finally(() => setLoadingUsers(false));
   }, [allClientUsers.length]);
 
   /* ── Derived state ── */
 
-  const registeredEmails = new Set(registrations.map((r) => r.email.toLowerCase()));
-  const filteredUsers = userSearchQuery.trim().length >= 2
-    ? allClientUsers.filter(
-        (u) =>
-          !registeredEmails.has(u.email.toLowerCase()) &&
-          (u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-            u.email.toLowerCase().includes(userSearchQuery.toLowerCase()))
-      )
-    : [];
+  const registeredEmails = new Set(
+    registrations.map((r) => r.email.toLowerCase()),
+  );
+  const filteredUsers =
+    userSearchQuery.trim().length >= 2
+      ? allClientUsers.filter(
+          (u) =>
+            !registeredEmails.has(u.email.toLowerCase()) &&
+            (u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+              u.email.toLowerCase().includes(userSearchQuery.toLowerCase())),
+        )
+      : [];
 
   const filteredRegs = registrations.filter((r) => {
     const matchesSearch =
       r.name.toLowerCase().includes(search.toLowerCase()) ||
       r.email.toLowerCase().includes(search.toLowerCase()) ||
       r.phone.includes(search);
-    const matchesType = typeFilter === "all" || r.registrationType === typeFilter;
+    const matchesType =
+      typeFilter === "all" || r.registrationType === typeFilter;
     const matchesCheckIn =
       checkInFilter === "all" ||
       (checkInFilter === "checked-in" ? r.isCheckedIn : !r.isCheckedIn);
@@ -338,10 +371,19 @@ export default function RegistrationsPage() {
   });
 
   const checkedInCount = registrations.filter((r) => r.isCheckedIn).length;
-  const individualCount = registrations.filter((r) => r.registrationType === "Individual").length;
-  const teamCount = registrations.filter((r) => r.registrationType === "Team").length;
-  const capacityPercent = event?.maxParticipants ? Math.round((registrations.length / event.maxParticipants) * 100) : 0;
-  const checkInPercent = registrations.length > 0 ? Math.round((checkedInCount / registrations.length) * 100) : 0;
+  const individualCount = registrations.filter(
+    (r) => r.registrationType === "Individual",
+  ).length;
+  const teamCount = registrations.filter(
+    (r) => r.registrationType === "Team",
+  ).length;
+  const capacityPercent = event?.maxParticipants
+    ? Math.round((registrations.length / event.maxParticipants) * 100)
+    : 0;
+  const checkInPercent =
+    registrations.length > 0
+      ? Math.round((checkedInCount / registrations.length) * 100)
+      : 0;
 
   // Registration timeline – group by date for mini bar chart
   const timeline = useMemo(() => {
@@ -350,12 +392,19 @@ export default function RegistrationsPage() {
     registrations.forEach((r) => {
       if (!r.registeredAt) return;
       try {
-        const d = typeof r.registeredAt === "object" && (r.registeredAt as any)?._seconds
-          ? new Date((r.registeredAt as any)._seconds * 1000)
-          : new Date(r.registeredAt);
-        const key = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+        const d =
+          typeof r.registeredAt === "object" &&
+          (r.registeredAt as any)?._seconds
+            ? new Date((r.registeredAt as any)._seconds * 1000)
+            : new Date(r.registeredAt);
+        const key = d.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+        });
         counts[key] = (counts[key] || 0) + 1;
-      } catch { /* skip bad dates */ }
+      } catch {
+        /* skip bad dates */
+      }
     });
     return Object.entries(counts).map(([date, count]) => ({ date, count }));
   }, [registrations]);
@@ -382,10 +431,15 @@ export default function RegistrationsPage() {
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredRegs.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
-  const paginatedRegs = filteredRegs.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paginatedRegs = filteredRegs.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize,
+  );
 
   // Reset to page 1 when filters change
-  useEffect(() => { setCurrentPage(1); }, [search, typeFilter, checkInFilter]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, typeFilter, checkInFilter]);
 
   /* ── Handlers ── */
 
@@ -393,22 +447,31 @@ export default function RegistrationsPage() {
     if (!selectedUser) return;
     setAddingReg(true);
     try {
-      const res = await fetch(`/api/admin/managed-events/${eventId}/registrations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: selectedUser.id,
-          name: selectedUser.name,
-          email: selectedUser.email,
-          phone: selectedUser.phoneNumber || "",
-          registrationType: regForm.registrationType,
-        }),
-      });
+      const res = await fetch(
+        `/api/admin/managed-events/${eventId}/registrations`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: selectedUser.id,
+            name: selectedUser.name,
+            email: selectedUser.email,
+            phone: selectedUser.phoneNumber || "",
+            registrationType: regForm.registrationType,
+          }),
+        },
+      );
       if (res.ok) {
         setShowAddReg(false);
         setSelectedUser(null);
         setUserSearchQuery("");
-        setRegForm({ userId: "", name: "", email: "", phone: "", registrationType: "Individual" });
+        setRegForm({
+          userId: "",
+          name: "",
+          email: "",
+          phone: "",
+          registrationType: "Individual",
+        });
         fetchRegistrations();
       }
     } catch {
@@ -421,11 +484,14 @@ export default function RegistrationsPage() {
   async function handleToggleCheckIn(regId: string, current: boolean) {
     setTogglingId(regId);
     try {
-      await fetch(`/api/admin/managed-events/${eventId}/registrations/${regId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isCheckedIn: !current }),
-      });
+      await fetch(
+        `/api/admin/managed-events/${eventId}/registrations/${regId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isCheckedIn: !current }),
+        },
+      );
       fetchRegistrations();
     } catch {
       console.error("Failed to toggle check-in");
@@ -437,7 +503,10 @@ export default function RegistrationsPage() {
   async function handleDeleteRegistration(regId: string) {
     setDeletingRegId(regId);
     try {
-      await fetch(`/api/admin/managed-events/${eventId}/registrations/${regId}`, { method: "DELETE" });
+      await fetch(
+        `/api/admin/managed-events/${eventId}/registrations/${regId}`,
+        { method: "DELETE" },
+      );
       setRegistrations((prev) => prev.filter((r) => r.regId !== regId));
       setConfirmDeleteRegId(null);
     } catch {
@@ -471,12 +540,15 @@ export default function RegistrationsPage() {
     try {
       await Promise.all(
         unchecked.map((r) =>
-          fetch(`/api/admin/managed-events/${eventId}/registrations/${r.regId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ isCheckedIn: true }),
-          })
-        )
+          fetch(
+            `/api/admin/managed-events/${eventId}/registrations/${r.regId}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ isCheckedIn: true }),
+            },
+          ),
+        ),
       );
       fetchRegistrations();
     } catch {
@@ -486,13 +558,49 @@ export default function RegistrationsPage() {
     }
   }
 
+  async function handleBulkCheckOut() {
+    const checked = filteredRegs.filter((r) => r.isCheckedIn);
+    if (checked.length === 0) return;
+    setBulkCheckingOut(true);
+    try {
+      await Promise.all(
+        checked.map((r) =>
+          fetch(
+            `/api/admin/managed-events/${eventId}/registrations/${r.regId}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ isCheckedIn: false }),
+            },
+          ),
+        ),
+      );
+      fetchRegistrations();
+    } catch {
+      console.error("Failed to bulk check-out");
+    } finally {
+      setBulkCheckingOut(false);
+    }
+  }
+
   function handleExportCSV() {
     if (registrations.length === 0) return;
     const userBranchMap = new Map<string, string>();
     allClientUsers.forEach((u) => {
       if (u.branch) userBranchMap.set(u.id, u.branch);
     });
-    const headers = ["#", "User ID", "Name", "Email", "Phone", "Branch", "Type", "Registered At", "Checked In", "Checked In At"];
+    const headers = [
+      "#",
+      "User ID",
+      "Name",
+      "Email",
+      "Phone",
+      "Branch",
+      "Type",
+      "Registered At",
+      "Checked In",
+      "Checked In At",
+    ];
     const rows = registrations.map((r, i) => [
       String(i + 1),
       r.userId || "-",
@@ -505,7 +613,9 @@ export default function RegistrationsPage() {
       r.isCheckedIn ? "Yes" : "No",
       r.checkedInAt ? formatDate(r.checkedInAt) : "-",
     ]);
-    const csv = [headers, ...rows].map((row) => row.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = [headers, ...rows]
+      .map((row) => row.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))
+      .join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -521,8 +631,14 @@ export default function RegistrationsPage() {
   if (error || !event) {
     return (
       <div className="flex flex-col items-center justify-center h-96">
-        <p className="text-xl text-muted-foreground">{error || "Event not found"}</p>
-        <Button variant="ghost" className="mt-4" onClick={() => router.push("/admin/managed-events")}>
+        <p className="text-xl text-muted-foreground">
+          {error || "Event not found"}
+        </p>
+        <Button
+          variant="ghost"
+          className="mt-4"
+          onClick={() => router.push("/admin/managed-events")}
+        >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
         </Button>
       </div>
@@ -536,7 +652,6 @@ export default function RegistrationsPage() {
       <PageHeader title="Registration Management" />
 
       <div className="flex-1 p-6 space-y-6">
-
         {/* ── Nav bar ── */}
         <div className="flex items-center justify-between">
           <button
@@ -555,7 +670,11 @@ export default function RegistrationsPage() {
             >
               <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
             </Button>
-            <Button size="sm" className="h-8 text-xs" onClick={() => setShowAddReg(true)}>
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => setShowAddReg(true)}
+            >
               <UserPlus className="mr-1.5 h-3.5 w-3.5" /> Add Registration
             </Button>
           </div>
@@ -565,11 +684,13 @@ export default function RegistrationsPage() {
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                event.isRegistrationOpen
-                  ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                  : "bg-muted-foreground/30"
-              }`} />
+              <div
+                className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                  event.isRegistrationOpen
+                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                    : "bg-muted-foreground/30"
+                }`}
+              />
               <div>
                 <p className="text-sm font-semibold">
                   Registration is {event.isRegistrationOpen ? "Open" : "Closed"}
@@ -597,7 +718,9 @@ export default function RegistrationsPage() {
               ) : (
                 <ToggleLeft className="mr-1.5 h-3.5 w-3.5" />
               )}
-              {event.isRegistrationOpen ? "Close Registration" : "Open Registration"}
+              {event.isRegistrationOpen
+                ? "Close Registration"
+                : "Open Registration"}
             </Button>
           </div>
         </div>
@@ -605,26 +728,46 @@ export default function RegistrationsPage() {
         {/* ── Analytics Dashboard ── */}
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Registration Analytics</span>
+            <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+              Registration Analytics
+            </span>
             <div className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
-              <span><strong className="text-foreground">{registrations.length}</strong> registered</span>
+              <span>
+                <strong className="text-foreground">
+                  {registrations.length}
+                </strong>{" "}
+                registered
+              </span>
               <span className="w-px h-3 bg-border" />
-              <span><strong className="text-foreground">{checkedInCount}</strong> checked in</span>
+              <span>
+                <strong className="text-foreground">{checkedInCount}</strong>{" "}
+                checked in
+              </span>
               <span className="w-px h-3 bg-border" />
-              <span><strong className="text-foreground">{individualCount}</strong> individual</span>
+              <span>
+                <strong className="text-foreground">{individualCount}</strong>{" "}
+                individual
+              </span>
               <span className="w-px h-3 bg-border" />
-              <span><strong className="text-foreground">{teamCount}</strong> team</span>
+              <span>
+                <strong className="text-foreground">{teamCount}</strong> team
+              </span>
             </div>
           </div>
 
           <div className="p-5 grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.5fr] gap-6">
-
             {/* ─ Left: Donut Rings ─ */}
             <div className="flex items-center justify-center gap-8">
               <DonutRing
                 value={registrations.length}
                 max={event.maxParticipants || registrations.length || 1}
-                color={capacityPercent > 90 ? "#ef4444" : capacityPercent > 70 ? "#f59e0b" : "#10b981"}
+                color={
+                  capacityPercent > 90
+                    ? "#ef4444"
+                    : capacityPercent > 70
+                      ? "#f59e0b"
+                      : "#10b981"
+                }
                 label="Capacity"
                 sublabel={`${registrations.length}${event.maxParticipants > 0 ? ` / ${event.maxParticipants}` : ""} slots`}
               />
@@ -639,7 +782,9 @@ export default function RegistrationsPage() {
 
             {/* ─ Center: Type Breakdown ─ */}
             <div className="flex flex-col justify-center gap-4">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Registration Type Split</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Registration Type Split
+              </p>
 
               {/* Stacked horizontal bar */}
               <div className="space-y-2">
@@ -648,18 +793,32 @@ export default function RegistrationsPage() {
                     <>
                       <div
                         className="h-full bg-blue-500 transition-all duration-500 flex items-center justify-center"
-                        style={{ width: `${(individualCount / registrations.length) * 100}%` }}
+                        style={{
+                          width: `${(individualCount / registrations.length) * 100}%`,
+                        }}
                       >
                         {individualCount > 0 && (
-                          <span className="text-[9px] font-bold text-white px-1 truncate">{Math.round((individualCount / registrations.length) * 100)}%</span>
+                          <span className="text-[9px] font-bold text-white px-1 truncate">
+                            {Math.round(
+                              (individualCount / registrations.length) * 100,
+                            )}
+                            %
+                          </span>
                         )}
                       </div>
                       <div
                         className="h-full bg-violet-500 transition-all duration-500 flex items-center justify-center"
-                        style={{ width: `${(teamCount / registrations.length) * 100}%` }}
+                        style={{
+                          width: `${(teamCount / registrations.length) * 100}%`,
+                        }}
                       >
                         {teamCount > 0 && (
-                          <span className="text-[9px] font-bold text-white px-1 truncate">{Math.round((teamCount / registrations.length) * 100)}%</span>
+                          <span className="text-[9px] font-bold text-white px-1 truncate">
+                            {Math.round(
+                              (teamCount / registrations.length) * 100,
+                            )}
+                            %
+                          </span>
                         )}
                       </div>
                     </>
@@ -668,40 +827,66 @@ export default function RegistrationsPage() {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
-                    <span className="text-xs text-muted-foreground">Individual</span>
-                    <span className="text-xs font-bold tabular-nums">{individualCount}</span>
+                    <span className="text-xs text-muted-foreground">
+                      Individual
+                    </span>
+                    <span className="text-xs font-bold tabular-nums">
+                      {individualCount}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-violet-500" />
                     <span className="text-xs text-muted-foreground">Team</span>
-                    <span className="text-xs font-bold tabular-nums">{teamCount}</span>
+                    <span className="text-xs font-bold tabular-nums">
+                      {teamCount}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Check-in breakdown mini bars */}
               <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Check-in Status</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Check-in Status
+                </p>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground w-16 shrink-0">Checked In</span>
+                  <span className="text-[10px] text-muted-foreground w-16 shrink-0">
+                    Checked In
+                  </span>
                   <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${checkInPercent}%` }} />
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                      style={{ width: `${checkInPercent}%` }}
+                    />
                   </div>
-                  <span className="text-[10px] font-semibold tabular-nums w-8 text-right">{checkedInCount}</span>
+                  <span className="text-[10px] font-semibold tabular-nums w-8 text-right">
+                    {checkedInCount}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground w-16 shrink-0">Pending</span>
+                  <span className="text-[10px] text-muted-foreground w-16 shrink-0">
+                    Pending
+                  </span>
                   <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-amber-500 transition-all duration-500" style={{ width: `${registrations.length > 0 ? 100 - checkInPercent : 0}%` }} />
+                    <div
+                      className="h-full rounded-full bg-amber-500 transition-all duration-500"
+                      style={{
+                        width: `${registrations.length > 0 ? 100 - checkInPercent : 0}%`,
+                      }}
+                    />
                   </div>
-                  <span className="text-[10px] font-semibold tabular-nums w-8 text-right">{registrations.length - checkedInCount}</span>
+                  <span className="text-[10px] font-semibold tabular-nums w-8 text-right">
+                    {registrations.length - checkedInCount}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* ─ Right: Registration Timeline ─ */}
             <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Registration Timeline</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Registration Timeline
+              </p>
               {timeline.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground/40">
                   No registrations yet
@@ -709,7 +894,10 @@ export default function RegistrationsPage() {
               ) : (
                 <div className="flex-1 flex items-end gap-1 min-h-[100px]">
                   {timeline.map((t, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative min-w-0">
+                    <div
+                      key={i}
+                      className="flex-1 flex flex-col items-center gap-1 group relative min-w-0"
+                    >
                       {/* Tooltip */}
                       <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-foreground text-background text-[9px] font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                         {t.count} reg{t.count !== 1 ? "s" : ""}
@@ -722,7 +910,9 @@ export default function RegistrationsPage() {
                         }}
                       />
                       {/* Label */}
-                      <span className="text-[8px] text-muted-foreground/60 leading-none truncate w-full text-center">{t.date}</span>
+                      <span className="text-[8px] text-muted-foreground/60 leading-none truncate w-full text-center">
+                        {t.date}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -736,30 +926,55 @@ export default function RegistrationsPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <GraduationCap className="w-3.5 h-3.5 text-muted-foreground" />
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Branch-wise Registrations</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Branch-wise Registrations
+                  </p>
                 </div>
-                <span className="text-[10px] text-muted-foreground">{branchStats.length} branches</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {branchStats.length} branches
+                </span>
               </div>
               {branchStats.length === 0 ? (
                 <div className="flex items-center justify-center py-6 text-xs text-muted-foreground/40">
-                  {loadingUsers ? "Loading branch data..." : registrations.length === 0 ? "No registrations yet" : "No branch data available"}
+                  {loadingUsers
+                    ? "Loading branch data..."
+                    : registrations.length === 0
+                      ? "No registrations yet"
+                      : "No branch data available"}
                 </div>
               ) : (
                 <div className="space-y-2">
                   {branchStats.map((b) => {
-                    const pct = registrations.length > 0 ? Math.round((b.count / registrations.length) * 100) : 0;
+                    const pct =
+                      registrations.length > 0
+                        ? Math.round((b.count / registrations.length) * 100)
+                        : 0;
                     return (
-                      <div key={b.branch} className="flex items-center gap-3 group">
-                        <span className="text-xs font-medium text-muted-foreground w-20 shrink-0 truncate" title={b.branch}>{b.branch}</span>
+                      <div
+                        key={b.branch}
+                        className="flex items-center gap-3 group"
+                      >
+                        <span
+                          className="text-xs font-medium text-muted-foreground w-20 shrink-0 truncate"
+                          title={b.branch}
+                        >
+                          {b.branch}
+                        </span>
                         <div className="flex-1 h-5 rounded-md bg-muted overflow-hidden">
                           <div
                             className="h-full rounded-md bg-primary/70 group-hover:bg-primary transition-all duration-500 flex items-center justify-end"
-                            style={{ width: `${Math.max(8, (b.count / maxBranchCount) * 100)}%` }}
+                            style={{
+                              width: `${Math.max(8, (b.count / maxBranchCount) * 100)}%`,
+                            }}
                           >
-                            <span className="text-[9px] font-bold text-primary-foreground px-2 truncate">{b.count}</span>
+                            <span className="text-[9px] font-bold text-primary-foreground px-2 truncate">
+                              {b.count}
+                            </span>
                           </div>
                         </div>
-                        <span className="text-[10px] font-semibold tabular-nums text-muted-foreground w-10 text-right">{pct}%</span>
+                        <span className="text-[10px] font-semibold tabular-nums text-muted-foreground w-10 text-right">
+                          {pct}%
+                        </span>
                       </div>
                     );
                   })}
@@ -771,7 +986,6 @@ export default function RegistrationsPage() {
 
         {/* ── Registrations Table ── */}
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-
           {/* Filters bar */}
           <div className="px-5 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b border-border bg-muted/20">
             <div className="relative flex-1 w-full sm:max-w-xs">
@@ -784,7 +998,12 @@ export default function RegistrationsPage() {
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as "all" | "Individual" | "Team")}>
+              <Select
+                value={typeFilter}
+                onValueChange={(v) =>
+                  setTypeFilter(v as "all" | "Individual" | "Team")
+                }
+              >
                 <SelectTrigger className="h-8 text-xs w-[130px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -794,7 +1013,12 @@ export default function RegistrationsPage() {
                   <SelectItem value="Team">Team</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={checkInFilter} onValueChange={(v) => setCheckInFilter(v as "all" | "checked-in" | "not-checked-in")}>
+              <Select
+                value={checkInFilter}
+                onValueChange={(v) =>
+                  setCheckInFilter(v as "all" | "checked-in" | "not-checked-in")
+                }
+              >
                 <SelectTrigger className="h-8 text-xs w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -804,29 +1028,50 @@ export default function RegistrationsPage() {
                   <SelectItem value="not-checked-in">Not Checked In</SelectItem>
                 </SelectContent>
               </Select>
-              {filteredRegs.length > 0 && filteredRegs.some((r) => !r.isCheckedIn) && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleBulkCheckIn}
-                  disabled={bulkChecking}
-                  className="h-8 text-xs"
-                >
-                  {bulkChecking ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  Check In All ({filteredRegs.filter((r) => !r.isCheckedIn).length})
-                </Button>
-              )}
+              {filteredRegs.length > 0 &&
+                filteredRegs.some((r) => !r.isCheckedIn) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleBulkCheckIn}
+                    disabled={bulkChecking}
+                    className="h-8 text-xs"
+                  >
+                    {bulkChecking ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    Check In All (
+                    {filteredRegs.filter((r) => !r.isCheckedIn).length})
+                  </Button>
+                )}
+              {filteredRegs.length > 0 &&
+                filteredRegs.some((r) => r.isCheckedIn) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleBulkCheckOut}
+                    disabled={bulkCheckingOut}
+                    className="h-8 text-xs"
+                  >
+                    {bulkCheckingOut ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    Check Out All (
+                    {filteredRegs.filter((r) => r.isCheckedIn).length})
+                  </Button>
+                )}
             </div>
           </div>
 
           {/* Table content */}
           {regLoading ? (
             <div className="py-16 text-center text-muted-foreground text-sm">
-              <Loader2 className="w-5 h-5 mx-auto animate-spin mb-2" /> Loading registrations…
+              <Loader2 className="w-5 h-5 mx-auto animate-spin mb-2" /> Loading
+              registrations…
             </div>
           ) : filteredRegs.length === 0 ? (
             <div className="py-16 text-center text-muted-foreground">
@@ -847,14 +1092,24 @@ export default function RegistrationsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="text-xs w-10 text-center">#</TableHead>
+                    <TableHead className="text-xs w-10 text-center">
+                      #
+                    </TableHead>
                     <TableHead className="text-xs">Name</TableHead>
                     <TableHead className="text-xs">Email</TableHead>
-                    <TableHead className="text-xs hidden md:table-cell">Phone</TableHead>
+                    <TableHead className="text-xs hidden md:table-cell">
+                      Phone
+                    </TableHead>
                     <TableHead className="text-xs">Type</TableHead>
-                    <TableHead className="text-xs hidden lg:table-cell">Registered</TableHead>
-                    <TableHead className="text-xs text-center">Check-in</TableHead>
-                    <TableHead className="text-xs hidden lg:table-cell">Checked In At</TableHead>
+                    <TableHead className="text-xs hidden lg:table-cell">
+                      Registered
+                    </TableHead>
+                    <TableHead className="text-xs text-center">
+                      Check-in
+                    </TableHead>
+                    <TableHead className="text-xs hidden lg:table-cell">
+                      Checked In At
+                    </TableHead>
                     <TableHead className="text-xs text-right w-16"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -873,19 +1128,25 @@ export default function RegistrationsPage() {
                           <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground shrink-0">
                             {reg.name?.charAt(0)?.toUpperCase() || "?"}
                           </div>
-                          <span className="truncate max-w-[150px]">{reg.name}</span>
+                          <span className="truncate max-w-[150px]">
+                            {reg.name}
+                          </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground py-2.5 text-xs">{reg.email}</TableCell>
+                      <TableCell className="text-muted-foreground py-2.5 text-xs">
+                        {reg.email}
+                      </TableCell>
                       <TableCell className="text-muted-foreground py-2.5 font-mono text-xs hidden md:table-cell">
                         {reg.phone || "–"}
                       </TableCell>
                       <TableCell className="py-2.5">
-                        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
-                          reg.registrationType === "Team"
-                            ? "bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400"
-                            : "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400"
-                        }`}>
+                        <span
+                          className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
+                            reg.registrationType === "Team"
+                              ? "bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400"
+                              : "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400"
+                          }`}
+                        >
                           {reg.registrationType}
                         </span>
                       </TableCell>
@@ -894,10 +1155,17 @@ export default function RegistrationsPage() {
                       </TableCell>
                       <TableCell className="text-center py-2.5">
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleToggleCheckIn(reg.regId, reg.isCheckedIn); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleCheckIn(reg.regId, reg.isCheckedIn);
+                          }}
                           disabled={togglingId === reg.regId}
                           className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-muted transition-colors"
-                          title={reg.isCheckedIn ? "Mark as not checked in" : "Mark as checked in"}
+                          title={
+                            reg.isCheckedIn
+                              ? "Mark as not checked in"
+                              : "Mark as checked in"
+                          }
                         >
                           {togglingId === reg.regId ? (
                             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -909,19 +1177,33 @@ export default function RegistrationsPage() {
                         </button>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground py-2.5 hidden lg:table-cell">
-                        {reg.isCheckedIn && reg.checkedInAt ? formatDate(reg.checkedInAt) : "–"}
+                        {reg.isCheckedIn && reg.checkedInAt
+                          ? formatDate(reg.checkedInAt)
+                          : "–"}
                       </TableCell>
-                      <TableCell className="text-right py-2.5" onClick={(e) => e.stopPropagation()}>
+                      <TableCell
+                        className="text-right py-2.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {confirmDeleteRegId === reg.regId ? (
                           <div className="flex items-center justify-end gap-1">
                             <button
-                              onClick={() => handleDeleteRegistration(reg.regId)}
+                              onClick={() =>
+                                handleDeleteRegistration(reg.regId)
+                              }
                               disabled={deletingRegId === reg.regId}
                               className="px-2 py-0.5 bg-red-600 text-white rounded text-[11px] hover:bg-red-700 disabled:opacity-50"
                             >
-                              {deletingRegId === reg.regId ? <Loader2 className="w-3 h-3 animate-spin" /> : "Delete"}
+                              {deletingRegId === reg.regId ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                "Delete"
+                              )}
                             </button>
-                            <button onClick={() => setConfirmDeleteRegId(null)} className="px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground">
+                            <button
+                              onClick={() => setConfirmDeleteRegId(null)}
+                              className="px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                            >
                               Cancel
                             </button>
                           </div>
@@ -946,17 +1228,31 @@ export default function RegistrationsPage() {
             <div className="px-5 py-3 border-t border-border bg-muted/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="text-xs text-muted-foreground">
-                  Showing {filteredRegs.length === 0 ? 0 : (safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filteredRegs.length)} of {filteredRegs.length}
+                  Showing{" "}
+                  {filteredRegs.length === 0
+                    ? 0
+                    : (safePage - 1) * pageSize + 1}
+                  –{Math.min(safePage * pageSize, filteredRegs.length)} of{" "}
+                  {filteredRegs.length}
                   {filteredRegs.length !== registrations.length && (
-                    <span className="text-muted-foreground/50"> (filtered from {registrations.length})</span>
+                    <span className="text-muted-foreground/50">
+                      {" "}
+                      (filtered from {registrations.length})
+                    </span>
                   )}
                 </span>
-                {(typeFilter !== "all" || checkInFilter !== "all" || search) && (
+                {(typeFilter !== "all" ||
+                  checkInFilter !== "all" ||
+                  search) && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-6 text-[10px] px-2"
-                    onClick={() => { setSearch(""); setTypeFilter("all"); setCheckInFilter("all"); }}
+                    onClick={() => {
+                      setSearch("");
+                      setTypeFilter("all");
+                      setCheckInFilter("all");
+                    }}
                   >
                     <Filter className="mr-1 h-2.5 w-2.5" /> Clear Filters
                   </Button>
@@ -966,8 +1262,16 @@ export default function RegistrationsPage() {
               {/* Pagination controls */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 mr-2">
-                  <span className="text-[10px] text-muted-foreground">Rows:</span>
-                  <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                  <span className="text-[10px] text-muted-foreground">
+                    Rows:
+                  </span>
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={(v) => {
+                      setPageSize(Number(v));
+                      setCurrentPage(1);
+                    }}
+                  >
                     <SelectTrigger className="h-7 w-[60px] text-[11px]">
                       <SelectValue />
                     </SelectTrigger>
@@ -1024,7 +1328,9 @@ export default function RegistrationsPage() {
                   })()}
 
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     disabled={safePage >= totalPages}
                     className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Next page"
@@ -1047,7 +1353,12 @@ export default function RegistrationsPage() {
       </div>
 
       {/* ── Registration Detail Dialog ── */}
-      <Dialog open={!!detailReg} onOpenChange={(open) => { if (!open) setDetailReg(null); }}>
+      <Dialog
+        open={!!detailReg}
+        onOpenChange={(open) => {
+          if (!open) setDetailReg(null);
+        }}
+      >
         <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden">
           <DialogTitle className="sr-only">Registration Details</DialogTitle>
           {detailReg && (
@@ -1070,20 +1381,30 @@ export default function RegistrationsPage() {
                 {/* Name + badges */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-semibold truncate">{detailReg.name}</h3>
-                    <span className={`px-2 py-0.5 text-[11px] font-medium rounded-md border ${
-                      detailReg.registrationType === "Team"
-                        ? "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20"
-                        : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20"
-                    }`}>
+                    <h3 className="text-base font-semibold truncate">
+                      {detailReg.name}
+                    </h3>
+                    <span
+                      className={`px-2 py-0.5 text-[11px] font-medium rounded-md border ${
+                        detailReg.registrationType === "Team"
+                          ? "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20"
+                          : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20"
+                      }`}
+                    >
                       {detailReg.registrationType}
                     </span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-md border ${
-                      detailReg.isCheckedIn
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
-                        : "bg-muted text-muted-foreground border-border"
-                    }`}>
-                      {detailReg.isCheckedIn ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-md border ${
+                        detailReg.isCheckedIn
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
+                          : "bg-muted text-muted-foreground border-border"
+                      }`}
+                    >
+                      {detailReg.isCheckedIn ? (
+                        <CheckCircle className="w-3 h-3" />
+                      ) : (
+                        <XCircle className="w-3 h-3" />
+                      )}
                       {detailReg.isCheckedIn ? "Checked In" : "Not Checked In"}
                     </span>
                     {detailUser?.isBlocked && (
@@ -1092,18 +1413,40 @@ export default function RegistrationsPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground truncate mt-0.5">{detailReg.email}</p>
+                  <p className="text-sm text-muted-foreground truncate mt-0.5">
+                    {detailReg.email}
+                  </p>
                   {detailUser && (
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">{detailUser.role}</Badge>
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0 font-medium"
+                      >
+                        {detailUser.role}
+                      </Badge>
                       {detailUser.profileCompleted && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-500/20">Profile Complete</Badge>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0 text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-500/20"
+                        >
+                          Profile Complete
+                        </Badge>
                       )}
                       {detailUser.branch && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{detailUser.branch}</Badge>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0"
+                        >
+                          {detailUser.branch}
+                        </Badge>
                       )}
                       {detailUser.graduationYear && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{detailUser.graduationYear}</Badge>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0"
+                        >
+                          {detailUser.graduationYear}
+                        </Badge>
                       )}
                     </div>
                   )}
@@ -1113,30 +1456,49 @@ export default function RegistrationsPage() {
               {/* ── Body: two-column layout ── */}
               <div className="overflow-y-auto max-h-[calc(85vh-180px)]">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 sm:divide-x divide-border">
-
                   {/* Left column — Registration Info */}
                   <div className="px-6 py-4 space-y-3">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Registration Info</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Registration Info
+                    </p>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between py-1.5">
-                        <span className="text-xs text-muted-foreground">Reg. Phone</span>
-                        <span className="text-sm font-medium font-mono">{detailReg.phone || "–"}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Reg. Phone
+                        </span>
+                        <span className="text-sm font-medium font-mono">
+                          {detailReg.phone || "–"}
+                        </span>
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between py-1.5">
-                        <span className="text-xs text-muted-foreground">Type</span>
-                        <span className="text-sm font-medium">{detailReg.registrationType}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Type
+                        </span>
+                        <span className="text-sm font-medium">
+                          {detailReg.registrationType}
+                        </span>
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between py-1.5">
-                        <span className="text-xs text-muted-foreground">Registered At</span>
-                        <span className="text-sm font-medium">{formatDate(detailReg.registeredAt)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Registered At
+                        </span>
+                        <span className="text-sm font-medium">
+                          {formatDate(detailReg.registeredAt)}
+                        </span>
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between py-1.5">
-                        <span className="text-xs text-muted-foreground">Check-In</span>
+                        <span className="text-xs text-muted-foreground">
+                          Check-In
+                        </span>
                         <span className="text-sm font-medium flex items-center gap-1.5">
-                          {detailReg.isCheckedIn ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> : <XCircle className="w-3.5 h-3.5 text-muted-foreground/40" />}
+                          {detailReg.isCheckedIn ? (
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : (
+                            <XCircle className="w-3.5 h-3.5 text-muted-foreground/40" />
+                          )}
                           {detailReg.isCheckedIn ? "Yes" : "No"}
                         </span>
                       </div>
@@ -1144,8 +1506,12 @@ export default function RegistrationsPage() {
                         <>
                           <Separator />
                           <div className="flex items-center justify-between py-1.5">
-                            <span className="text-xs text-muted-foreground">Checked In At</span>
-                            <span className="text-sm font-medium">{formatDate(detailReg.checkedInAt)}</span>
+                            <span className="text-xs text-muted-foreground">
+                              Checked In At
+                            </span>
+                            <span className="text-sm font-medium">
+                              {formatDate(detailReg.checkedInAt)}
+                            </span>
                           </div>
                         </>
                       )}
@@ -1154,77 +1520,128 @@ export default function RegistrationsPage() {
 
                   {/* Right column — User Profile */}
                   <div className="px-6 py-4 space-y-3 border-t sm:border-t-0 border-border">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">User Profile</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      User Profile
+                    </p>
 
                     {detailUserLoading ? (
                       <div className="flex items-center justify-center py-8 gap-2">
                         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Loading...</span>
+                        <span className="text-sm text-muted-foreground">
+                          Loading...
+                        </span>
                       </div>
                     ) : detailUserError ? (
                       <div className="rounded-lg border border-dashed border-border p-4 text-center">
-                        <p className="text-sm text-muted-foreground">Profile unavailable</p>
-                        <p className="text-xs text-muted-foreground/60 mt-0.5">User may have been deleted</p>
+                        <p className="text-sm text-muted-foreground">
+                          Profile unavailable
+                        </p>
+                        <p className="text-xs text-muted-foreground/60 mt-0.5">
+                          User may have been deleted
+                        </p>
                       </div>
                     ) : detailUser ? (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between py-1.5">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Phone className="w-3 h-3" /> Phone</span>
-                          <span className="text-sm font-medium font-mono">{detailUser.phoneNumber || "–"}</span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <Phone className="w-3 h-3" /> Phone
+                          </span>
+                          <span className="text-sm font-medium font-mono">
+                            {detailUser.phoneNumber || "–"}
+                          </span>
                         </div>
                         <Separator />
                         <div className="flex items-center justify-between py-1.5">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Mail className="w-3 h-3" /> Email</span>
-                          <span className="text-sm font-medium truncate max-w-[180px]">{detailUser.email}</span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <Mail className="w-3 h-3" /> Email
+                          </span>
+                          <span className="text-sm font-medium truncate max-w-[180px]">
+                            {detailUser.email}
+                          </span>
                         </div>
                         <Separator />
                         <div className="flex items-center justify-between py-1.5">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Briefcase className="w-3 h-3" /> Branch</span>
-                          <span className="text-sm font-medium">{detailUser.branch || "–"}</span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <Briefcase className="w-3 h-3" /> Branch
+                          </span>
+                          <span className="text-sm font-medium">
+                            {detailUser.branch || "–"}
+                          </span>
                         </div>
                         <Separator />
                         <div className="flex items-center justify-between py-1.5">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1.5"><GraduationCap className="w-3 h-3" /> Grad. Year</span>
-                          <span className="text-sm font-medium">{detailUser.graduationYear || "–"}</span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <GraduationCap className="w-3 h-3" /> Grad. Year
+                          </span>
+                          <span className="text-sm font-medium">
+                            {detailUser.graduationYear || "–"}
+                          </span>
                         </div>
 
                         {/* Social links */}
-                        {detailUser.socialMedia && Object.keys(detailUser.socialMedia).some(k => detailUser.socialMedia[k]) && (
-                          <>
-                            <Separator />
-                            <div className="py-1.5">
-                              <span className="text-xs text-muted-foreground">Social</span>
-                              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                {detailUser.socialMedia.linkedin && (
-                                  <a href={detailUser.socialMedia.linkedin} target="_blank" rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20 transition-colors">
-                                    <Linkedin className="w-3 h-3" /> LinkedIn <ExternalLink className="w-2.5 h-2.5 opacity-40" />
-                                  </a>
-                                )}
-                                {detailUser.socialMedia.github && (
-                                  <a href={detailUser.socialMedia.github} target="_blank" rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20 transition-colors">
-                                    <Github className="w-3 h-3" /> GitHub <ExternalLink className="w-2.5 h-2.5 opacity-40" />
-                                  </a>
-                                )}
-                                {detailUser.socialMedia.twitter && (
-                                  <a href={detailUser.socialMedia.twitter} target="_blank" rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20 transition-colors">
-                                    <Twitter className="w-3 h-3" /> Twitter <ExternalLink className="w-2.5 h-2.5 opacity-40" />
-                                  </a>
-                                )}
+                        {detailUser.socialMedia &&
+                          Object.keys(detailUser.socialMedia).some(
+                            (k) => detailUser.socialMedia[k],
+                          ) && (
+                            <>
+                              <Separator />
+                              <div className="py-1.5">
+                                <span className="text-xs text-muted-foreground">
+                                  Social
+                                </span>
+                                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                  {detailUser.socialMedia.linkedin && (
+                                    <a
+                                      href={detailUser.socialMedia.linkedin}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20 transition-colors"
+                                    >
+                                      <Linkedin className="w-3 h-3" /> LinkedIn{" "}
+                                      <ExternalLink className="w-2.5 h-2.5 opacity-40" />
+                                    </a>
+                                  )}
+                                  {detailUser.socialMedia.github && (
+                                    <a
+                                      href={detailUser.socialMedia.github}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20 transition-colors"
+                                    >
+                                      <Github className="w-3 h-3" /> GitHub{" "}
+                                      <ExternalLink className="w-2.5 h-2.5 opacity-40" />
+                                    </a>
+                                  )}
+                                  {detailUser.socialMedia.twitter && (
+                                    <a
+                                      href={detailUser.socialMedia.twitter}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20 transition-colors"
+                                    >
+                                      <Twitter className="w-3 h-3" /> Twitter{" "}
+                                      <ExternalLink className="w-2.5 h-2.5 opacity-40" />
+                                    </a>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </>
-                        )}
+                            </>
+                          )}
 
                         {/* Resume */}
                         {detailUser.resumeUrl && (
                           <>
                             <Separator />
                             <div className="flex items-center justify-between py-1.5">
-                              <span className="text-xs text-muted-foreground flex items-center gap-1.5"><FileText className="w-3 h-3" /> Resume</span>
-                              <a href={detailUser.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+                              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <FileText className="w-3 h-3" /> Resume
+                              </span>
+                              <a
+                                href={detailUser.resumeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
+                              >
                                 View <ExternalLink className="w-3 h-3" />
                               </a>
                             </div>
@@ -1233,8 +1650,15 @@ export default function RegistrationsPage() {
 
                         <Separator />
                         <div className="flex items-center justify-between py-1.5">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Users className="w-3 h-3" /> Participations</span>
-                          <span className="text-sm font-medium">{detailUser.participations?.length || 0} event{(detailUser.participations?.length || 0) !== 1 ? "s" : ""}</span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <Users className="w-3 h-3" /> Participations
+                          </span>
+                          <span className="text-sm font-medium">
+                            {detailUser.participations?.length || 0} event
+                            {(detailUser.participations?.length || 0) !== 1
+                              ? "s"
+                              : ""}
+                          </span>
                         </div>
 
                         {/* Timestamps */}
@@ -1242,8 +1666,16 @@ export default function RegistrationsPage() {
                           <>
                             <Separator />
                             <div className="flex items-center gap-3 py-1.5 text-[10px] text-muted-foreground">
-                              {detailUser.createdAt && <span>Joined {formatDate(detailUser.createdAt)}</span>}
-                              {detailUser.updatedAt && <span>· Updated {formatDate(detailUser.updatedAt)}</span>}
+                              {detailUser.createdAt && (
+                                <span>
+                                  Joined {formatDate(detailUser.createdAt)}
+                                </span>
+                              )}
+                              {detailUser.updatedAt && (
+                                <span>
+                                  · Updated {formatDate(detailUser.updatedAt)}
+                                </span>
+                              )}
                             </div>
                           </>
                         )}
@@ -1256,8 +1688,12 @@ export default function RegistrationsPage() {
               {/* ── Footer ── */}
               <div className="flex items-center justify-between px-6 py-3 border-t border-border">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">ID</span>
-                  <code className="text-[11px] font-mono text-muted-foreground">{detailReg.userId}</code>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                    ID
+                  </span>
+                  <code className="text-[11px] font-mono text-muted-foreground">
+                    {detailReg.userId}
+                  </code>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -1277,14 +1713,21 @@ export default function RegistrationsPage() {
                     variant={detailReg.isCheckedIn ? "outline" : "default"}
                     className="h-8 px-3 text-xs"
                     onClick={() => {
-                      handleToggleCheckIn(detailReg.regId, detailReg.isCheckedIn);
+                      handleToggleCheckIn(
+                        detailReg.regId,
+                        detailReg.isCheckedIn,
+                      );
                       setDetailReg(null);
                     }}
                   >
                     {detailReg.isCheckedIn ? (
-                      <><XCircle className="mr-1.5 h-3.5 w-3.5" /> Undo Check-In</>
+                      <>
+                        <XCircle className="mr-1.5 h-3.5 w-3.5" /> Undo Check-In
+                      </>
                     ) : (
-                      <><CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Check In</>
+                      <>
+                        <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Check In
+                      </>
                     )}
                   </Button>
                 </div>
@@ -1295,16 +1738,25 @@ export default function RegistrationsPage() {
       </Dialog>
 
       {/* ── Add Registration Dialog ── */}
-      <Dialog open={showAddReg} onOpenChange={(open) => {
-        setShowAddReg(open);
-        if (!open) { setSelectedUser(null); setUserSearchQuery(""); }
-      }}>
+      <Dialog
+        open={showAddReg}
+        onOpenChange={(open) => {
+          setShowAddReg(open);
+          if (!open) {
+            setSelectedUser(null);
+            setUserSearchQuery("");
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[440px] p-0 gap-0 overflow-hidden">
           <div className="px-6 pt-6 pb-4">
             <DialogHeader>
-              <DialogTitle className="text-base font-semibold">Add Registration</DialogTitle>
+              <DialogTitle className="text-base font-semibold">
+                Add Registration
+              </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Search and select a user from the system to register for {event.title}.
+                Search and select a user from the system to register for{" "}
+                {event.title}.
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -1316,8 +1768,12 @@ export default function RegistrationsPage() {
                   {selectedUser.name?.charAt(0)?.toUpperCase() || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium leading-tight truncate">{selectedUser.name}</p>
-                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5 truncate">{selectedUser.email}</p>
+                  <p className="text-[13px] font-medium leading-tight truncate">
+                    {selectedUser.name}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5 truncate">
+                    {selectedUser.email}
+                  </p>
                 </div>
                 {selectedUser.branch && (
                   <span className="shrink-0 px-2 py-0.5 text-[10px] font-medium rounded-full bg-muted text-muted-foreground border border-border">
@@ -1325,7 +1781,10 @@ export default function RegistrationsPage() {
                   </span>
                 )}
                 <button
-                  onClick={() => { setSelectedUser(null); setUserSearchQuery(""); }}
+                  onClick={() => {
+                    setSelectedUser(null);
+                    setUserSearchQuery("");
+                  }}
                   className="shrink-0 p-1 rounded-md hover:bg-muted transition-colors"
                   title="Change user"
                 >
@@ -1349,17 +1808,23 @@ export default function RegistrationsPage() {
                     {loadingUsers ? (
                       <div className="flex items-center justify-center gap-2 py-8">
                         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Loading users…</span>
+                        <span className="text-xs text-muted-foreground">
+                          Loading users…
+                        </span>
                       </div>
                     ) : userSearchQuery.trim().length < 2 ? (
                       <div className="flex flex-col items-center justify-center py-8 gap-1">
                         <Search className="w-5 h-5 text-muted-foreground/30" />
-                        <span className="text-xs text-muted-foreground/60">Type at least 2 characters to search</span>
+                        <span className="text-xs text-muted-foreground/60">
+                          Type at least 2 characters to search
+                        </span>
                       </div>
                     ) : filteredUsers.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 gap-1">
                         <Users className="w-5 h-5 text-muted-foreground/30" />
-                        <span className="text-xs text-muted-foreground/60">No matching users found</span>
+                        <span className="text-xs text-muted-foreground/60">
+                          No matching users found
+                        </span>
                       </div>
                     ) : (
                       filteredUsers.slice(0, 20).map((u) => (
@@ -1372,11 +1837,17 @@ export default function RegistrationsPage() {
                             {u.name?.charAt(0)?.toUpperCase() || "?"}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium leading-tight truncate">{u.name}</p>
-                            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5 truncate">{u.email}</p>
+                            <p className="text-[13px] font-medium leading-tight truncate">
+                              {u.name}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5 truncate">
+                              {u.email}
+                            </p>
                           </div>
                           {u.branch && (
-                            <span className="shrink-0 text-[10px] text-muted-foreground/70">{u.branch}</span>
+                            <span className="shrink-0 text-[10px] text-muted-foreground/70">
+                              {u.branch}
+                            </span>
                           )}
                         </button>
                       ))
@@ -1385,7 +1856,8 @@ export default function RegistrationsPage() {
                   {filteredUsers.length > 0 && (
                     <div className="px-3 py-1.5 bg-muted/30 border-t border-border">
                       <span className="text-[10px] text-muted-foreground/60">
-                        {filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""} found
+                        {filteredUsers.length} user
+                        {filteredUsers.length !== 1 ? "s" : ""} found
                         {filteredUsers.length > 20 ? " · showing first 20" : ""}
                       </span>
                     </div>
@@ -1396,9 +1868,21 @@ export default function RegistrationsPage() {
 
             {selectedUser && (
               <div className="mt-4 space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">Registration Type</Label>
-                <Select value={regForm.registrationType} onValueChange={(v) => setRegForm((p) => ({ ...p, registrationType: v as RegistrationType }))}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Registration Type
+                </Label>
+                <Select
+                  value={regForm.registrationType}
+                  onValueChange={(v) =>
+                    setRegForm((p) => ({
+                      ...p,
+                      registrationType: v as RegistrationType,
+                    }))
+                  }
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Individual">Individual</SelectItem>
                     <SelectItem value="Team">Team</SelectItem>
@@ -1413,7 +1897,11 @@ export default function RegistrationsPage() {
               variant="ghost"
               size="sm"
               className="h-8 px-3 text-xs"
-              onClick={() => { setShowAddReg(false); setSelectedUser(null); setUserSearchQuery(""); }}
+              onClick={() => {
+                setShowAddReg(false);
+                setSelectedUser(null);
+                setUserSearchQuery("");
+              }}
             >
               Cancel
             </Button>
@@ -1423,7 +1911,11 @@ export default function RegistrationsPage() {
               onClick={handleAddRegistration}
               disabled={addingReg || !selectedUser}
             >
-              {addingReg ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <UserPlus className="mr-1.5 h-3.5 w-3.5" />}
+              {addingReg ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+              )}
               Register
             </Button>
           </div>
