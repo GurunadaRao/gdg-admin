@@ -32,15 +32,36 @@ export async function verifySessionCookie(
 ): Promise<AuthUser | null> {
   try {
     const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
+    console.log("verifySessionCookie success. decoded:", decoded);
     return {
       uid: decoded.uid,
       email: decoded.email || "",
       name: decoded.name || "",
       isAdmin: decoded.admin === true,
     };
-  } catch {
+  } catch (error) {
+    console.error("verifySessionCookie failed:", error);
     return null;
   }
+}
+
+/**
+ * Resolve the session cookie from a request and verify it as an admin.
+ * Used by API routes that are NOT covered by proxy.ts (e.g. /api/recruitment/*)
+ * but must only be reachable by admins. Returns null when unauthenticated.
+ */
+export async function requireAdmin(
+  request: Request,
+): Promise<AuthUser | null> {
+  const cookies = request.headers.get("cookie") ?? "";
+  const match = cookies
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${COOKIE_NAME}=`));
+  if (!match) return null;
+  const token = decodeURIComponent(match.slice(COOKIE_NAME.length + 1));
+  const user = await verifySessionCookie(token);
+  return user?.isAdmin ? user : null;
 }
 
 export function getSessionCookieConfig(sessionCookie: string) {

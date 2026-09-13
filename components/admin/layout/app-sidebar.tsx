@@ -18,6 +18,7 @@ import {
   Image,
   LogOut,
   ShieldCheck,
+  Briefcase,
 } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
@@ -86,6 +87,11 @@ const menuItems = [
     title: "GDG Team",
     url: "/admin/gdg-team",
     icon: ShieldCheck,
+  },
+  {
+    title: "Recruitment",
+    url: "/admin/recruitment",
+    icon: Briefcase,
   },
   {
     title: "Settings",

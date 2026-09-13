@@ -7,6 +7,7 @@
 import "dotenv/config";
 import { initializeApp, cert, type ServiceAccount } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 const serviceAccount: ServiceAccount = {
   projectId: process.env.FIREBASE_PROJECT_ID,
@@ -19,10 +20,11 @@ const app = initializeApp({
 });
 
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 async function addAdmin() {
-  const email = "admin@gdgvitb.in";
-  const password = "123456";
+  const email = "devadmin@gdgvitb.in";
+  const password = "admin_dev";
   const displayName = "GDG DEVS";
 
   try {
@@ -31,6 +33,8 @@ async function addAdmin() {
     try {
       user = await auth.getUserByEmail(email);
       console.log(`User with email ${email} already exists (uid: ${user.uid}).`);
+      await auth.updateUser(user.uid, { password, displayName });
+      console.log("Existing admin password updated.");
     } catch {
       // User doesn't exist — create one
       user = await auth.createUser({
@@ -43,6 +47,17 @@ async function addAdmin() {
 
     // Set admin custom claim
     await auth.setCustomUserClaims(user.uid, { admin: true });
+
+    // Add to client_users collection
+    await db.collection("client_users").doc(user.uid).set({
+      name: displayName,
+      email: email,
+      role: "admin",
+      isBlocked: false,
+      profileCompleted: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }, { merge: true });
 
     console.log("-----------------------------------");
     console.log(`UID:   ${user.uid}`);

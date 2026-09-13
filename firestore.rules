@@ -1,0 +1,62 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // ── Recruitment Roles (signed-in users can read; admins manage) ─────
+    match /recruitment_roles/{roleId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── Applications ────────────────────────────────────────────────────
+    match /recruitment_applications/{appId} {
+      // Anyone signed in can submit; the dedupe key must match the
+      // roleId + authed email so applicants can't spoof someone else.
+      allow create: if isSignedIn()
+        && request.resource.data.userEmail == request.auth.token.email
+        && request.resource.data.dedupeKey
+             == request.resource.data.roleId + "_" + request.auth.token.email
+        && request.resource.data.status == "submitted";
+
+      // Applicant can read their own; admins can read all.
+      allow read: if isSignedIn()
+        && (resource.data.userId == request.auth.uid
+            || resource.data.userEmail == request.auth.token.email
+            || isAdmin());
+
+      // Only admins can update/delete.
+      allow update, delete: if isAdmin();
+
+      // Reviews subcollection — admin only.
+      match /reviews/{reviewId} {
+        allow read, write: if isAdmin();
+      }
+
+      // Status history subcollection — admin only.
+      match /status_history/{historyId} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    // ── Settings (public read for the "is recruitment active?" check) ──
+    match /recruitment_settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Saved field templates (admin CRUD) ──────────────────────────────
+    match /recruitment_field_templates/{templateId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

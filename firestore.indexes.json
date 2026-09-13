@@ -1,0 +1,76 @@
+{
+  "indexes": [
+    /* Admin + public: list applications for one role, newest first */
+    {
+      "collectionGroup": "recruitment_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "roleId", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    /* Admin: list applications filtered by status, newest first */
+    {
+      "collectionGroup": "recruitment_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    /* Admin: role + status combo filter, newest first */
+    {
+      "collectionGroup": "recruitment_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "roleId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    /* Future "my applications" view for the applicant portal */
+    {
+      "collectionGroup": "recruitment_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    /* Dedupe lookup — explicit, documents the dedupeKey contract */
+    {
+      "collectionGroup": "recruitment_applications",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "dedupeKey", "order": "ASCENDING" }]
+    },
+    /* Public landing: open roles ordered by creation (newest first) */
+    {
+      "collectionGroup": "recruitment_roles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    /* Free-form / dynamic maps are never filtered or ordered in queries.
+       Disabling auto-indexes keeps index storage bounded (they would
+       otherwise index every nested key of every document). */
+    {
+      "collectionGroup": "recruitment_applications",
+      "fieldPath": "answers",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "recruitment_applications",
+      "fieldPath": "files",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "recruitment_applications",
+      "fieldPath": "socialLinks",
+      "indexes": []
+    }
+  ]
+}

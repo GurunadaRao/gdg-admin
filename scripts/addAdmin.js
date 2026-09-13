@@ -21,7 +21,7 @@ const auth = getAuth(app);
 
 async function addAdmin() {
   const email = "admin@gdgvitb.in";
-  const password = "123456";
+  const password = "admin@1234";
   const displayName = "GDG DEVS";
 
   try {
@@ -29,6 +29,8 @@ async function addAdmin() {
     try {
       user = await auth.getUserByEmail(email);
       console.log(`User with email ${email} already exists (uid: ${user.uid}).`);
+      await auth.updateUser(user.uid, { password, displayName });
+      console.log("Existing admin password updated.");
     } catch {
       user = await auth.createUser({
         email,

@@ -23,8 +23,8 @@ async function main() {
   }
   console.log(`FIREBASE_PROJECT_ID found: ${process.env.FIREBASE_PROJECT_ID}`);
 
-  const email = "dev@gdg.vitb.in";
-  const password = "1234567890";
+  const email = "devadmin@gdgvitb.in";
+  const password = "admin_dev";
   const passwordHash = crypto
     .createHash("sha256")
     .update(password)
