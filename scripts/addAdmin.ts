@@ -23,9 +23,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 async function addAdmin() {
-  const email = "devadmin@gdgvitb.in";
-  const password = "admin_dev";
-  const displayName = "GDG DEVS";
+  const email = "organizer@gdgvitb.in";
+  const password = "admin_organizer";
+  const displayName = "GDG Organizer";
 
   try {
     // Check if user already exists

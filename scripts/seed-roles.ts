@@ -182,6 +182,11 @@ const roles = [
     { name: "linkedin", label: "LinkedIn URL", type: "url", required: true },
     { name: "past_experience", label: "Past Experience in PR / HR (if any)", type: "text", required: false, maxLength: 2000 },
     { name: "why_pr_hr", label: "Why are you interested in Public Relations & Human Resources?", type: "text", required: true, minLength: 50, maxLength: 2000 }
+  ]),
+  createRole("logistics-operations", "Logistics & Operations", "#795548", "local_shipping", [
+    { name: "linkedin", label: "LinkedIn URL", type: "url", required: true },
+    { name: "past_experience", label: "Past Experience in Logistics/Operations (if any)", type: "text", required: false, maxLength: 2000 },
+    { name: "why_logistics", label: "Why are you interested in Logistics & Operations?", type: "text", required: true, minLength: 50, maxLength: 2000 }
   ])
 ];
 
