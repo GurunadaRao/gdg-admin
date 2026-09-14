@@ -37,7 +37,7 @@ const RESUME_FIELD: RecruitmentRoleField = {
   accept: ".pdf,.doc,.docx",
   allowedExtensions: [".pdf", ".doc", ".docx"],
   maxSizeMB: 5,
-  driveFolderId: "" // Needs to be filled in admin dashboard later
+  driveFolderId: "11XNJ_WsmI2OZsXFPijxTFuwIIyG7VPAb"
 };
 
 const SECTIONS: RecruitmentRoleSection[] = [
@@ -77,12 +77,23 @@ const SECTION_1_FIELDS: RecruitmentRoleField[] = [
     helpText: "Autofilled from your profile"
   },
   {
+    name: "phone",
+    label: "Mobile Number",
+    type: "tel",
+    section: 1,
+    required: true,
+    order: 2,
+    placeholder: "Enter your mobile number",
+    pattern: "^[6-9]\\d{9}$",
+    patternMessage: "Enter a valid 10-digit mobile number"
+  },
+  {
     name: "department",
     label: "Department",
     type: "select",
     section: 1,
     required: true,
-    order: 2,
+    order: 3,
     options: [
       { label: "CSE", value: "CSE" },
       { label: "ECE", value: "ECE" },
@@ -112,10 +123,10 @@ function createRole(id: string, title: string, color: string, icon: string, cust
     description: `Recruitment for the ${title} team.`,
     icon,
     color,
-    status: "draft",
-    maxApplications: null,
-    applicationStart: null,
-    applicationEnd: null,
+    status: "open",
+    maxApplications: 100,
+    applicationStart: "2026-09-14T08:30:00.000Z",
+    applicationEnd: "2026-09-16T15:30:00.000Z",
     sections: SECTIONS,
     fields,
     createdBy: "devadmin@gdgvitb.in",

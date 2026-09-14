@@ -32,7 +32,6 @@ import {
   ROLE_STATUS_CLASSES,
 } from "@/lib/recruitment";
 import type { RecruitmentRole } from "@/lib/types/recruitment";
-import { RoleFormDialog } from "./RoleFormDialog";
 
 function fmtDate(v: string | null): string {
   if (!v) return "—";
@@ -45,8 +44,6 @@ export function RolesPanel() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<RecruitmentRole | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchRoles = useCallback(async () => {
@@ -92,7 +89,7 @@ export function RolesPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -134,21 +131,21 @@ export function RolesPanel() {
             <Card key={role.id} className="flex flex-col">
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div
-                      className="flex h-11 w-11 items-center justify-center rounded-xl text-xl"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl"
                       style={{ backgroundColor: `${role.color}1A` }}
                     >
                       {role.icon || <ClipboardList className="h-5 w-5" style={{ color: role.color }} />}
                     </div>
-                    <div>
-                      <CardTitle className="text-base">{role.title}</CardTitle>
-                      <p className="text-xs text-muted-foreground">{role.fields.length} field{role.fields.length === 1 ? "" : "s"} · {role.sections.length} section{role.sections.length === 1 ? "" : "s"}</p>
+                    <div className="min-w-0">
+                      <CardTitle className="truncate text-base">{role.title}</CardTitle>
+                      <p className="truncate text-xs text-muted-foreground">{role.fields.length} field{role.fields.length === 1 ? "" : "s"} · {role.sections.length} section{role.sections.length === 1 ? "" : "s"}</p>
                     </div>
                   </div>
                   <Badge
                     variant="outline"
-                    className={cn(ROLE_STATUS_CLASSES[role.status])}
+                    className={cn("shrink-0", ROLE_STATUS_CLASSES[role.status])}
                   >
                     {role.status.replace("-", " ")}
                   </Badge>
@@ -168,7 +165,7 @@ export function RolesPanel() {
                     {fmtDate(role.applicationStart)} → {fmtDate(role.applicationEnd)}
                   </span>
                 </div>
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   <Link
                     href={`/recruitment/${role.id}`}
                     target="_blank"
@@ -177,9 +174,12 @@ export function RolesPanel() {
                   >
                     <ExternalLink className="h-3.5 w-3.5" /> Open
                   </Link>
-                  <Button size="sm" variant="outline" onClick={() => { setEditing(role); setDialogOpen(true); }}>
+                  <Link
+                    href={`/admin/recruitment/${role.id}/edit`}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm hover:bg-accent"
+                  >
                     <Pencil className="h-3.5 w-3.5" /> Edit
-                  </Button>
+                  </Link>
                   <Button
                     size="sm"
                     variant="outline"
@@ -195,13 +195,6 @@ export function RolesPanel() {
           ))}
         </div>
       )}
-
-      <RoleFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        role={editing}
-        onSaved={fetchRoles}
-      />
     </div>
   );
 }

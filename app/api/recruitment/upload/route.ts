@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         }[])
       : [];
     const field = fields.find((f) => f.name === fieldName);
-    const folderId = field?.driveFolderId?.trim() || "1aDm5XSzrbnLRnwOxTEn2F23R6IIkzppr";
+    const folderId = field?.driveFolderId?.trim() ?? "";
     if (field?.type !== "file" || !folderId) {
       return meta(origin, 400, {
         error: `No Drive folder configured for field "${fieldName}"`,
