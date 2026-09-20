@@ -19,7 +19,11 @@ import {
   LogOut,
   ShieldCheck,
   Briefcase,
+  UserCog,
+  ShieldEllipsis,
+  User
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
   Sidebar,
@@ -97,11 +101,38 @@ const menuItems = [
     title: "Settings",
     url: "/admin/settings",
     icon: Settings,
+    module: "settings",
   },
+  {
+    title: "Admin Users",
+    url: "/admin/admins",
+    icon: UserCog,
+    module: "users", // Or we could use a specific module, let's use 'users' or 'dashboard' but only if L0? We can allow L0 only, let's require 'settings' module for now.
+  },
+  {
+    title: "Roles & Permissions",
+    url: "/admin/roles",
+    icon: ShieldEllipsis,
+    module: "settings", // Only L0 has settings usually, or they can manage roles
+  }
 ];
 
 export function AppSidebar() {
   const router = useRouter();
+  const [userModules, setUserModules] = useState<string[] | null>(null);
+  const [roleId, setRoleId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.user) {
+          setUserModules(data.user.modules || []);
+          setRoleId(data.user.roleId || null);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -129,16 +160,32 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                // If it's Admins or Roles, only show to L0 for now, or those with canManageRoles
+                // The API protects it anyway, but we'll hide it for non-L0
+                if ((item.url === "/admin/admins" || item.url === "/admin/roles") && roleId !== "L0") {
+                  return null;
+                }
+                
+                // For other items, check module map
+                const moduleName = item.url.split("/")[2] || "";
+                
+                // If userModules is null (loading) or empty, maybe show nothing or wait
+                if (userModules && !userModules.includes(moduleName) && moduleName !== "admins" && moduleName !== "roles") {
+                  return null;
+                }
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <Link href={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -147,6 +194,14 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Profile">
+              <Link href="/admin/profile">
+                <User className="h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
               <LogOut className="h-4 w-4" />

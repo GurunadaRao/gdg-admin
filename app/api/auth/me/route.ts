@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionCookie, COOKIE_NAME } from "@/lib/auth";
+import { db } from "@/lib/firebase";
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +20,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
+    let teamMemberId = null;
+    try {
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      if (userDoc.exists) {
+        teamMemberId = userDoc.data()?.teamMemberId || null;
+      }
+    } catch (e) {
+      console.error("Failed to fetch user doc for auth/me:", e);
+    }
+
     return NextResponse.json({
       authenticated: true,
       user: {
@@ -26,6 +37,9 @@ export async function GET(request: NextRequest) {
         email: user.email,
         name: user.name,
         role: user.isAdmin ? "admin" : "user",
+        roleId: user.roleId,
+        modules: user.modules || [],
+        teamMemberId,
       },
     });
   } catch (error) {

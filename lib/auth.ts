@@ -10,6 +10,8 @@ export interface AuthUser {
   email: string;
   name: string;
   isAdmin: boolean;
+  roleId?: string;
+  modules?: string[];
 }
 
 const COOKIE_NAME = "gdg_session";
@@ -38,6 +40,8 @@ export async function verifySessionCookie(
       email: decoded.email || "",
       name: decoded.name || "",
       isAdmin: decoded.admin === true,
+      roleId: decoded.roleId,
+      modules: decoded.modules || [],
     };
   } catch (error) {
     console.error("verifySessionCookie failed:", error);

@@ -19,6 +19,7 @@ This document outlines the complete NoSQL schema structure for the GDG Admin Por
 | 7   | `client_users`     | Registered community users (public-facing).                 | —                                                                       |
 | 8   | `users`            | Admin portal user accounts.                                 | —                                                                       |
 | 9   | `gallery`          | Uploaded images/media gallery.                              | —                                                                       |
+| 10  | `roles`            | RBAC roles and module permissions for admin users.          | —                                                                       |
 
 ---
 
@@ -297,14 +298,36 @@ interface ClientUser {
 **Path:** `users/{docId}`
 **Source:** `scripts/seed-user.ts`
 
-Internal admin portal user accounts. Seeded via the `addAdmin` script.
+Internal admin portal user accounts.
 
 ```typescript
 interface AdminUser {
   email: string;
   name: string;
-  password: string; // SHA-256 hex hash
+  password: string; // SHA-256 hex hash (legacy, if applicable)
   isAdmin: boolean;
+  roleId: string; // Reference to the role document in `roles`
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+```
+
+---
+
+### 8a. `roles` Collection (RBAC)
+
+**Path:** `roles/{docId}`
+**Source:** `app/api/admin/roles/route.ts`
+
+Defines roles and their accessible modules for admin users.
+
+```typescript
+interface Role {
+  id: string; // Document ID (e.g., L0, L1, L2, custom_role_id)
+  name: string; // e.g., "Super Admin", "Executive Board"
+  level: number; // 0 for super admin, higher numbers for lower hierarchy
+  modules: string[]; // Array of module keys e.g. ["members", "events", "gallery"]
+  canManageRoles: boolean; // Whether users with this role can create roles or assign permissions
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
 }

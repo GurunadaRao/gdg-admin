@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
         email: decoded.email || "",
         name: decoded.name || "",
         role: "admin",
+        roleId: decoded.roleId,
+        modules: decoded.modules || [],
       },
     });
 
