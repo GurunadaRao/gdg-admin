@@ -37,8 +37,15 @@ const EMPTY_FORM = {
   bgColor: "",
   logo: "",
   dept_logo: "",
-  rank: 0,
-  dept_rank: 0,
+  isAlumni: false,
+  roles: [{
+    id: "role-initial",
+    position: "",
+    designation: "",
+    rank: 0,
+    dept_rank: 0,
+    isActive: true
+  }],
 };
 
 export default function MembersPage() {
@@ -88,8 +95,31 @@ export default function MembersPage() {
     setAddOpen(true);
   }
 
-  function handleAddChange(field: string, value: string | number) {
+  function handleAddChange(field: string, value: any) {
     setAddForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleAddRoleChange(index: number, field: string, value: any) {
+    const newRoles = [...addForm.roles];
+    newRoles[index] = { ...newRoles[index], [field]: value };
+    setAddForm((prev) => ({ ...prev, roles: newRoles }));
+  }
+
+  function addRole() {
+    setAddForm((prev) => ({
+      ...prev,
+      roles: [
+        ...prev.roles,
+        {
+          id: `role-${Date.now()}`,
+          position: "",
+          designation: "",
+          rank: 0,
+          dept_rank: 0,
+          isActive: true
+        }
+      ]
+    }));
   }
 
   async function handleAddImageUpload(file: File) {
@@ -253,27 +283,54 @@ export default function MembersPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-8 w-full">
-            {Object.entries(
-              filtered
-                .slice()
-                // Sort: department rank first, then individual rank, then alphabetical
-                .sort((a, b) => {
-                  const dra = typeof a.dept_rank === "number" ? a.dept_rank : 0;
-                  const drb = typeof b.dept_rank === "number" ? b.dept_rank : 0;
-                  if (dra !== drb) return dra - drb;
-                  const ra = typeof a.rank === "number" ? a.rank : 0;
-                  const rb = typeof b.rank === "number" ? b.rank : 0;
-                  if (ra !== rb) return ra - rb;
-                  return (a.name || "").localeCompare(b.name || "");
-                })
-                .reduce<Record<string, MemberCardProps[]>>((acc, member) => {
-                  const pos = (member.position || "").trim() || "Unspecified";
-                  if (!acc[pos]) acc[pos] = [];
-                  acc[pos].push(member);
-                  return acc;
-                }, {}),
-            ).map(([position, groupMembers]) => (
+          <div className="space-y-16 w-full">
+            {/* Active Members */}
+            <div>
+              <h3 className="text-2xl font-bold text-foreground mb-6 pl-4 border-l-4 border-primary">
+                Active Team Members
+              </h3>
+              <div className="space-y-8 w-full">
+                {(() => {
+                  const grouped = filtered
+                    .filter((m) => !m.isAlumni)
+                    .reduce<Record<string, MemberCardProps[]>>((acc, member) => {
+                      const activeRoles = member.roles?.filter(r => r.isActive) || [];
+                      if (activeRoles.length === 0) {
+                        const pos = (member.position || "").trim() || "Unspecified";
+                        if (!acc[pos]) acc[pos] = [];
+                        acc[pos].push(member);
+                      } else {
+                        activeRoles.forEach(role => {
+                          const pos = (role.position || "").trim() || "Unspecified";
+                          if (!acc[pos]) acc[pos] = [];
+                          acc[pos].push({
+                            ...member,
+                            displayPosition: role.position,
+                            displayDesignation: role.designation,
+                            rank: role.rank,
+                            dept_rank: role.dept_rank
+                          });
+                        });
+                      }
+                      return acc;
+                    }, {});
+
+                  const sortedEntries = Object.entries(grouped).sort((a, b) => {
+                    const dra = typeof a[1][0]?.dept_rank === "number" ? a[1][0].dept_rank : 0;
+                    const drb = typeof b[1][0]?.dept_rank === "number" ? b[1][0].dept_rank : 0;
+                    return dra - drb;
+                  });
+
+                  sortedEntries.forEach(([_, groupMembers]) => {
+                    groupMembers.sort((a, b) => {
+                      const ra = typeof a.rank === "number" ? a.rank : 0;
+                      const rb = typeof b.rank === "number" ? b.rank : 0;
+                      if (ra !== rb) return ra - rb;
+                      return (a.name || "").localeCompare(b.name || "");
+                    });
+                  });
+
+                  return sortedEntries.map(([position, groupMembers]) => (
               <section
                 key={position}
                 className="flex flex-col items-center w-full"
@@ -353,6 +410,7 @@ export default function MembersPage() {
                                     rank={m.rank}
                                     dept_rank={m.dept_rank}
                                     dept_logo={m.dept_logo}
+                                    isAlumni={m.isAlumni}
                                     onDelete={handleDelete}
                                     onUpdate={handleUpdate}
                                   />
@@ -383,6 +441,7 @@ export default function MembersPage() {
                             rank={m.rank}
                             dept_rank={m.dept_rank}
                             dept_logo={m.dept_logo}
+                            isAlumni={m.isAlumni}
                             onDelete={handleDelete}
                             onUpdate={handleUpdate}
                           />
@@ -392,7 +451,182 @@ export default function MembersPage() {
                   )}
                 </div>
               </section>
-            ))}
+            ))
+          })()}
+              </div>
+            </div>
+
+            {/* Alumni Members */}
+            {filtered.filter((m) => m.isAlumni).length > 0 && (
+              <div>
+                <h3 className="text-2xl font-bold text-foreground mb-6 pl-4 border-l-4 border-stone-400">
+                  Alumni Team Members
+                </h3>
+                <div className="space-y-8 w-full">
+                  {(() => {
+                    const grouped = filtered
+                      .filter((m) => m.isAlumni)
+                      .reduce<Record<string, MemberCardProps[]>>((acc, member) => {
+                        const activeRoles = member.roles?.filter(r => r.isActive) || [];
+                        if (activeRoles.length === 0) {
+                          const pos = (member.position || "").trim() || "Unspecified";
+                          if (!acc[pos]) acc[pos] = [];
+                          acc[pos].push(member);
+                        } else {
+                          activeRoles.forEach(role => {
+                            const pos = (role.position || "").trim() || "Unspecified";
+                            if (!acc[pos]) acc[pos] = [];
+                            acc[pos].push({
+                              ...member,
+                              displayPosition: role.position,
+                              displayDesignation: role.designation,
+                              rank: role.rank,
+                              dept_rank: role.dept_rank
+                            });
+                          });
+                        }
+                        return acc;
+                      }, {});
+
+                    const sortedEntries = Object.entries(grouped).sort((a, b) => {
+                      const dra = typeof a[1][0]?.dept_rank === "number" ? a[1][0].dept_rank : 0;
+                      const drb = typeof b[1][0]?.dept_rank === "number" ? b[1][0].dept_rank : 0;
+                      return dra - drb;
+                    });
+
+                    sortedEntries.forEach(([_, groupMembers]) => {
+                      groupMembers.sort((a, b) => {
+                        const ra = typeof a.rank === "number" ? a.rank : 0;
+                        const rb = typeof b.rank === "number" ? b.rank : 0;
+                        if (ra !== rb) return ra - rb;
+                        return (a.name || "").localeCompare(b.name || "");
+                      });
+                    });
+
+                    return sortedEntries.map(([position, groupMembers]) => (
+                    <section
+                      key={position}
+                      className="flex flex-col items-center w-full"
+                    >
+                      <div
+                        style={{
+                          backgroundColor: groupMembers[0]?.bgColor || undefined,
+                        }}
+                        className="w-[330px] h-[54px] sm:w-[370px] lg:w-[800px] text-center rounded-[100px] items-center justify-center flex border-2 border-foreground"
+                      >
+                        <h2 className="text-xl font-semibold sm:m-1 p-2 text-center text-foreground">
+                          {position}
+                        </h2>
+                      </div>
+
+                      <div className="h-4" />
+
+                      <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 md:hidden">
+                        <div className="flex gap-6 px-4 min-w-max justify-center">
+                          {groupMembers.map((m) => (
+                            <div key={m.id} className="flex-shrink-0">
+                              <MemberCard
+                                id={m.id}
+                                imageUrl={m.imageUrl || "/file.svg"}
+                                name={m.name}
+                                designation={m.designation || "MEMBER"}
+                                position={m.position || undefined}
+                                linkedinUrl={m.linkedinUrl || undefined}
+                                mail={m.mail || undefined}
+                                bgColor={m.bgColor || undefined}
+                                logo={m.logo || undefined}
+                                rank={m.rank}
+                                dept_rank={m.dept_rank}
+                                dept_logo={m.dept_logo}
+                                isAlumni={m.isAlumni}
+                                onDelete={handleDelete}
+                                onUpdate={handleUpdate}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="hidden md:block w-full px-4">
+                        {groupMembers.length > 4 ? (
+                          <div className="space-y-6">
+                            {(() => {
+                              const rows: React.ReactNode[] = [];
+                              let index = 0;
+                              let rowIdx = 0;
+                              while (index < groupMembers.length) {
+                                const isOddRow = rowIdx % 2 === 0;
+                                const cardsInRow = isOddRow ? 3 : 2;
+                                const rowMembers = groupMembers.slice(
+                                  index,
+                                  index + cardsInRow,
+                                );
+                                rows.push(
+                                  <div
+                                    key={index}
+                                    className="flex gap-6 justify-center"
+                                  >
+                                    {rowMembers.map((m) => (
+                                      <div key={m.id} className="flex-shrink-0">
+                                        <MemberCard
+                                          id={m.id}
+                                          imageUrl={m.imageUrl || "/file.svg"}
+                                          name={m.name}
+                                          designation={m.designation || "MEMBER"}
+                                          position={m.position || undefined}
+                                          linkedinUrl={m.linkedinUrl || undefined}
+                                          mail={m.mail || undefined}
+                                          bgColor={m.bgColor || undefined}
+                                          logo={m.logo || undefined}
+                                          rank={m.rank}
+                                          dept_rank={m.dept_rank}
+                                          dept_logo={m.dept_logo}
+                                          isAlumni={m.isAlumni}
+                                          onDelete={handleDelete}
+                                          onUpdate={handleUpdate}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>,
+                                );
+                                index += cardsInRow;
+                                rowIdx++;
+                              }
+                              return rows;
+                            })()}
+                          </div>
+                        ) : (
+                          <div className="flex gap-6 justify-center">
+                            {groupMembers.map((m) => (
+                              <div key={m.id} className="flex-shrink-0">
+                                <MemberCard
+                                  id={m.id}
+                                  imageUrl={m.imageUrl || "/file.svg"}
+                                  name={m.name}
+                                  designation={m.designation || "MEMBER"}
+                                  position={m.position || undefined}
+                                  linkedinUrl={m.linkedinUrl || undefined}
+                                  mail={m.mail || undefined}
+                                  bgColor={m.bgColor || undefined}
+                                  logo={m.logo || undefined}
+                                  rank={m.rank}
+                                  dept_rank={m.dept_rank}
+                                  dept_logo={m.dept_logo}
+                                  isAlumni={m.isAlumni}
+                                  onDelete={handleDelete}
+                                  onUpdate={handleUpdate}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  ))
+                })()}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -474,18 +708,6 @@ export default function MembersPage() {
                       required
                     />
                     <AddField
-                      label="Designation"
-                      value={addForm.designation}
-                      onChange={(v) => handleAddChange("designation", v)}
-                      placeholder='e.g. "Lead", "Co Lead", "Member"'
-                    />
-                    <AddField
-                      label="Position"
-                      value={addForm.position}
-                      onChange={(v) => handleAddChange("position", v)}
-                      placeholder='e.g. "Event Management", "Communication"'
-                    />
-                    <AddField
                       label="Email"
                       value={addForm.mail}
                       onChange={(v) => handleAddChange("mail", v)}
@@ -535,39 +757,90 @@ export default function MembersPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-3">
-                      <div className="flex-1">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          Rank
-                        </label>
-                        <input
-                          type="number"
-                          value={addForm.rank}
-                          onChange={(e) =>
-                            handleAddChange(
-                              "rank",
-                              parseInt(e.target.value) || 0,
-                            )
-                          }
-                          className="w-full mt-1 px-3 py-1.5 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
+                    
+                    {/* Manage Roles Section */}
+                    <div className="pt-2 pb-2 border-t border-b border-border mt-4 mb-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-sm font-semibold text-foreground">Manage Roles</h3>
+                        <button type="button" onClick={addRole} className="text-xs bg-muted hover:bg-stone-200 text-stone-700 px-2 py-1 rounded border border-border">
+                          + Add Role
+                        </button>
                       </div>
-                      <div className="flex-1">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          Dept Rank
-                        </label>
-                        <input
-                          type="number"
-                          value={addForm.dept_rank}
-                          onChange={(e) =>
-                            handleAddChange(
-                              "dept_rank",
-                              parseInt(e.target.value) || 0,
-                            )
-                          }
-                          className="w-full mt-1 px-3 py-1.5 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
+                      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-stone-300">
+                        {addForm.roles.map((role, idx) => (
+                          <div key={role.id} className={`p-3 rounded-md border ${role.isActive ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/30 opacity-70'}`}>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Role {idx + 1}</span>
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <span className="text-xs text-stone-600">{role.isActive ? 'Active' : 'Inactive'}</span>
+                                <input 
+                                  type="checkbox" 
+                                  checked={role.isActive}
+                                  onChange={(e) => handleAddRoleChange(idx, "isActive", e.target.checked)}
+                                  className="w-3.5 h-3.5 rounded border-border" 
+                                />
+                              </label>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="text-[10px] font-medium text-stone-500">Department / Position</label>
+                                  <input
+                                    type="text"
+                                    value={role.position}
+                                    onChange={(e) => handleAddRoleChange(idx, "position", e.target.value)}
+                                    className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                    placeholder="e.g. Web Dev"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-medium text-stone-500">Designation</label>
+                                  <input
+                                    type="text"
+                                    value={role.designation}
+                                    onChange={(e) => handleAddRoleChange(idx, "designation", e.target.value)}
+                                    className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                    placeholder="e.g. Lead"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="text-[10px] font-medium text-stone-500">Individual Rank</label>
+                                  <input
+                                    type="number"
+                                    value={role.rank}
+                                    onChange={(e) => handleAddRoleChange(idx, "rank", parseInt(e.target.value) || 0)}
+                                    className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-medium text-stone-500">Dept Rank</label>
+                                  <input
+                                    type="number"
+                                    value={role.dept_rank}
+                                    onChange={(e) => handleAddRoleChange(idx, "dept_rank", parseInt(e.target.value) || 0)}
+                                    className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="checkbox"
+                        id="isAlumni-add"
+                        checked={addForm.isAlumni}
+                        onChange={(e) => handleAddChange("isAlumni", e.target.checked)}
+                        className="w-4 h-4 rounded border-border"
+                      />
+                      <label htmlFor="isAlumni-add" className="text-sm font-medium text-foreground">
+                        Is Alumni?
+                      </label>
                     </div>
                   </div>
 

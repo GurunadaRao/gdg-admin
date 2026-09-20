@@ -11,10 +11,27 @@ export async function GET() {
       .orderBy("name", "asc")
       .get();
 
-    const members = snapshot.docs.map((doc) => ({
-      ...doc.data(),
-      id: doc.id,
-    }));
+    const members = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      
+      // Backwards compatibility: wrap legacy fields in a roles array if none exists
+      if (!data.roles) {
+        data.roles = [{
+          id: `legacy-${doc.id}`,
+          position: data.position || "",
+          designation: data.designation || "",
+          rank: data.rank || 0,
+          dept_rank: data.dept_rank || 0,
+          dept_logo: data.dept_logo || "",
+          isActive: true
+        }];
+      }
+
+      return {
+        ...data,
+        id: doc.id,
+      };
+    });
 
     return NextResponse.json(members);
   } catch (err) {
@@ -51,6 +68,8 @@ export async function POST(request: NextRequest) {
       "dept_logo",
       "rank",
       "dept_rank",
+      "isAlumni",
+      "roles",
     ];
 
     const data: Record<string, unknown> = {};

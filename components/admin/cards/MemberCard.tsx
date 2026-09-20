@@ -3,19 +3,35 @@
 import React, { useState, useRef } from "react";
 import { Mail, Linkedin, Pencil, X, Loader2, Save, Trash2, Upload } from "lucide-react";
 
+export type TeamMemberRole = {
+  id: string;
+  position: string;
+  designation: string;
+  rank: number;
+  dept_rank: number;
+  dept_logo?: string;
+  isActive: boolean;
+};
+
 export type MemberCardProps = {
   bgColor?: string | null;
   logo?: string | null;
   id: string;
   imageUrl?: string | null;
   name: string;
+  linkedinUrl?: string | null;
+  mail?: string | null;
+  isAlumni?: boolean;
+  roles?: TeamMemberRole[];
+  // display props
+  displayPosition?: string | null;
+  displayDesignation?: string | null;
+  // legacy
   designation?: string | null;
   position?: string | null;
   rank?: number | null;
   dept_rank?: number | null;
   dept_logo?: string | null;
-  linkedinUrl?: string | null;
-  mail?: string | null;
 };
 
 type MemberCardComponentProps = MemberCardProps & {
@@ -35,6 +51,10 @@ export default function MemberCard({
   bgColor,
   rank,
   dept_rank,
+  isAlumni,
+  roles,
+  displayPosition,
+  displayDesignation,
   onDelete,
   onUpdate,
 }: MemberCardComponentProps) {
@@ -49,27 +69,37 @@ export default function MemberCard({
 
   const [form, setForm] = useState({
     name: name || "",
-    designation: designation || "",
-    position: position || "",
     imageUrl: imageUrl || "",
     mail: mail || "",
     linkedinUrl: linkedinUrl || "",
     bgColor: bgColor || "",
-    rank: rank ?? 0,
-    dept_rank: dept_rank ?? 0,
+    isAlumni: isAlumni ?? false,
+    roles: roles && roles.length > 0 ? [...roles] : [{
+      id: `legacy-${id}`,
+      position: position || "",
+      designation: designation || "",
+      rank: rank ?? 0,
+      dept_rank: dept_rank ?? 0,
+      isActive: true
+    }],
   });
 
   function openEdit() {
     setForm({
       name: name || "",
-      designation: designation || "",
-      position: position || "",
       imageUrl: imageUrl || "",
       mail: mail || "",
       linkedinUrl: linkedinUrl || "",
       bgColor: bgColor || "",
-      rank: rank ?? 0,
-      dept_rank: dept_rank ?? 0,
+      isAlumni: isAlumni ?? false,
+      roles: roles && roles.length > 0 ? [...roles] : [{
+        id: `legacy-${id}`,
+        position: position || "",
+        designation: designation || "",
+        rank: rank ?? 0,
+        dept_rank: dept_rank ?? 0,
+        isActive: true
+      }],
     });
     setSaved(false);
     setError(null);
@@ -105,8 +135,31 @@ export default function MemberCard({
     }
   }
 
-  function handleChange(field: string, value: string | number) {
+  function handleChange(field: string, value: any) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleRoleChange(index: number, field: keyof TeamMemberRole, value: any) {
+    const newRoles = [...form.roles];
+    newRoles[index] = { ...newRoles[index], [field]: value };
+    setForm((prev) => ({ ...prev, roles: newRoles }));
+  }
+
+  function addRole() {
+    setForm((prev) => ({
+      ...prev,
+      roles: [
+        ...prev.roles,
+        {
+          id: `role-${Date.now()}`,
+          position: "",
+          designation: "",
+          rank: 0,
+          dept_rank: 0,
+          isActive: true
+        }
+      ]
+    }));
   }
 
   async function handleImageUpload(file: File) {
@@ -170,6 +223,11 @@ export default function MemberCard({
             <div className="w-3 h-3 rounded-full bg-green-100" />
             <div className="w-3 h-3 rounded-full bg-yellow-100" />
           </div>
+          {isAlumni && (
+            <div className="text-xs font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200">
+              Alumni
+            </div>
+          )}
         </div>
 
         {/* Image area */}
@@ -199,7 +257,7 @@ export default function MemberCard({
               className="text-[20px] text-green-600 font-semibold mt-1 font-productSans text-wrap"
               style={{ color: bgColor || "#38a169" }}
             >
-              {designation}
+              {displayDesignation || designation}
             </h1>
 
             <div className="flex space-x-3">
@@ -304,16 +362,6 @@ export default function MemberCard({
                     onChange={(v) => handleChange("name", v)}
                   />
                   <Field
-                    label="Designation"
-                    value={form.designation}
-                    onChange={(v) => handleChange("designation", v)}
-                  />
-                  <Field
-                    label="Position"
-                    value={form.position}
-                    onChange={(v) => handleChange("position", v)}
-                  />
-                  <Field
                     label="Email"
                     value={form.mail}
                     onChange={(v) => handleChange("mail", v)}
@@ -325,62 +373,92 @@ export default function MemberCard({
                     onChange={(v) => handleChange("linkedinUrl", v)}
                     type="url"
                   />
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Background Color
-                      </label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <input
-                          type="color"
-                          value={form.bgColor || "#e6fffa"}
-                          onChange={(e) =>
-                            handleChange("bgColor", e.target.value)
-                          }
-                          className="w-8 h-8 rounded border border-border cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.bgColor}
-                          onChange={(e) =>
-                            handleChange("bgColor", e.target.value)
-                          }
-                          className="flex-1 px-3 py-1.5 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                          placeholder="#e6fffa"
-                        />
-                      </div>
+                  
+                  {/* Manage Roles Section */}
+                  <div className="pt-2 pb-2 border-t border-b border-border mt-4 mb-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground">Manage Roles</h3>
+                      <button type="button" onClick={addRole} className="text-xs bg-muted hover:bg-stone-200 text-stone-700 px-2 py-1 rounded border border-border">
+                        + Add Role
+                      </button>
+                    </div>
+                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-stone-300">
+                      {form.roles.map((role, idx) => (
+                        <div key={role.id} className={`p-3 rounded-md border ${role.isActive ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/30 opacity-70'}`}>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Role {idx + 1}</span>
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <span className="text-xs text-stone-600">{role.isActive ? 'Active' : 'Inactive'}</span>
+                              <input 
+                                type="checkbox" 
+                                checked={role.isActive}
+                                onChange={(e) => handleRoleChange(idx, "isActive", e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border-border" 
+                              />
+                            </label>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[10px] font-medium text-stone-500">Department / Position</label>
+                                <input
+                                  type="text"
+                                  value={role.position}
+                                  onChange={(e) => handleRoleChange(idx, "position", e.target.value)}
+                                  className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                  placeholder="e.g. Web Dev"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-medium text-stone-500">Designation</label>
+                                <input
+                                  type="text"
+                                  value={role.designation}
+                                  onChange={(e) => handleRoleChange(idx, "designation", e.target.value)}
+                                  className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                  placeholder="e.g. Lead"
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[10px] font-medium text-stone-500">Individual Rank</label>
+                                <input
+                                  type="number"
+                                  value={role.rank}
+                                  onChange={(e) => handleRoleChange(idx, "rank", parseInt(e.target.value) || 0)}
+                                  className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-medium text-stone-500">Dept Rank</label>
+                                <input
+                                  type="number"
+                                  value={role.dept_rank}
+                                  onChange={(e) => handleRoleChange(idx, "dept_rank", parseInt(e.target.value) || 0)}
+                                  className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Rank
-                      </label>
-                      <input
-                        type="number"
-                        value={form.rank}
-                        onChange={(e) =>
-                          handleChange("rank", parseInt(e.target.value) || 0)
-                        }
-                        className="w-full mt-1 px-3 py-1.5 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Dept Rank
-                      </label>
-                      <input
-                        type="number"
-                        value={form.dept_rank}
-                        onChange={(e) =>
-                          handleChange(
-                            "dept_rank",
-                            parseInt(e.target.value) || 0,
-                          )
-                        }
-                        className="w-full mt-1 px-3 py-1.5 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
+
+
+                  
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="checkbox"
+                      id="isAlumni-edit"
+                      checked={form.isAlumni}
+                      onChange={(e) => handleChange("isAlumni", e.target.checked as any)}
+                      className="w-4 h-4 rounded border-border"
+                    />
+                    <label htmlFor="isAlumni-edit" className="text-sm font-medium text-foreground">
+                      Is Alumni?
+                    </label>
                   </div>
                 </div>
 

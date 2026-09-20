@@ -23,6 +23,8 @@ export async function PATCH(
       "dept_logo",
       "rank",
       "dept_rank",
+      "isAlumni",
+      "roles",
     ];
 
     const data: Record<string, unknown> = {};

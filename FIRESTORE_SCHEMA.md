@@ -183,19 +183,33 @@ interface GDGTeamMember {
 Legacy collection for the GDG team display (website cards).
 
 ```typescript
+interface TeamMemberRole {
+  id: string; // Unique ID for the role entry
+  position: string; // e.g. "Event Management" (Department)
+  designation: string; // e.g. "Lead", "Member"
+  rank: number; // Individual rank within position
+  dept_rank: number; // Department/position group rank
+  dept_logo?: string; // Department icon URL
+  isActive: boolean; // true for current roles, false for past/historical roles
+}
+
 interface TeamMember {
   id: string; // Firestore document ID, added at read time
   name: string; // Required
-  designation: string; // e.g. "Lead", "Co Lead"
-  position: string; // e.g. "Event Management", "Communication"
   imageUrl: string; // Cloudinary URL
   logo: string; // Team logo/icon URL
-  dept_logo: string; // Department icon URL
   bgColor: string; // Hex color e.g. "#F8D8D8"
   linkedinUrl: string; // Full LinkedIn profile URL
   mail: string; // Email address
-  rank: number; // Individual rank within position
-  dept_rank: number; // Department/position group rank
+  isAlumni?: boolean; // Whether the member is from a previous batch
+  roles?: TeamMemberRole[]; // Array of roles (replaces root position/designation)
+  
+  // Legacy fields (deprecated in favor of roles array)
+  designation?: string;
+  position?: string;
+  rank?: number;
+  dept_rank?: number;
+  dept_logo?: string;
 }
 ```
 

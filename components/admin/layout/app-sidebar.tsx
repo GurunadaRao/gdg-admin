@@ -43,46 +43,46 @@ const menuItems = [
   //   url: "/admin/dashboard",
   //   icon: Home,
   // },
-  // {
-  //   title: "Members",
-  //   url: "/admin/members",
-  //   icon: Users,
-  // },
-  // {
-  //   title: "Events",
-  //   url: "/admin/events",
-  //   icon: Calendar,
-  // },
-  // {
-  //   title: "Event Manager",
-  //   url: "/admin/managed-events",
-  //   icon: CalendarCheck,
-  // },
+  {
+    title: "Members",
+    url: "/admin/members",
+    icon: Users,
+  },
+  {
+    title: "Events",
+    url: "/admin/events",
+    icon: Calendar,
+  },
+  {
+    title: "Event Manager",
+    url: "/admin/managed-events",
+    icon: CalendarCheck,
+  },
   {
     title: "Users",
     url: "/admin/users",
     icon: UsersRound,
   },
-  // {
-  //   title: "Forms",
-  //   url: "/admin/forms",
-  //   icon: FileText,
-  // },
-  // {
-  //   title: "Form Builder",
-  //   url: "/admin/form-builder",
-  //   icon: FileText,
-  // },
-  // {
-  //   title: "Image to Url",
-  //   url: "/admin/image-to-url",
-  //   icon: Link2,
-  // },
-  // {
-  //   title: "Gallery",
-  //   url: "/admin/gallery",
-  //   icon: Image,
-  // },
+  {
+    title: "Forms",
+    url: "/admin/forms",
+    icon: FileText,
+  },
+  {
+    title: "Form Builder",
+    url: "/admin/form-builder",
+    icon: FileText,
+  },
+  {
+    title: "Image to Url",
+    url: "/admin/image-to-url",
+    icon: Link2,
+  },
+  {
+    title: "Gallery",
+    url: "/admin/gallery",
+    icon: Image,
+  },
   {
     title: "GDG Team",
     url: "/admin/gdg-team",
@@ -93,11 +93,11 @@ const menuItems = [
     url: "/admin/recruitment",
     icon: Briefcase,
   },
-  // {
-  //   title: "Settings",
-  //   url: "/admin/settings",
-  //   icon: Settings,
-  // },
+  {
+    title: "Settings",
+    url: "/admin/settings",
+    icon: Settings,
+  },
 ];
 
 export function AppSidebar() {
