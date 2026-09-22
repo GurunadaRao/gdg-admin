@@ -21,10 +21,30 @@ export async function GET(request: NextRequest) {
     }
 
     let teamMemberId = null;
+    let dbRoleId = user.roleId;
+    let dbModules = user.modules || [];
+    let dbIsAdmin = user.isAdmin;
+    
     try {
       const userDoc = await db.collection("users").doc(user.uid).get();
       if (userDoc.exists) {
-        teamMemberId = userDoc.data()?.teamMemberId || null;
+        const userData = userDoc.data();
+        teamMemberId = userData?.teamMemberId || null;
+        
+        if (userData?.roleId) {
+          dbRoleId = userData.roleId;
+        }
+        if (userData?.isAdmin !== undefined) {
+          dbIsAdmin = userData.isAdmin;
+        }
+      }
+      
+      // If we have a roleId but no modules, or if we want to ensure modules are fresh, we can fetch from roles
+      if (dbRoleId && (!dbModules || dbModules.length === 0)) {
+        const roleDoc = await db.collection("roles").doc(dbRoleId).get();
+        if (roleDoc.exists) {
+          dbModules = roleDoc.data()?.modules || [];
+        }
       }
     } catch (e) {
       console.error("Failed to fetch user doc for auth/me:", e);
@@ -36,9 +56,9 @@ export async function GET(request: NextRequest) {
         id: user.uid,
         email: user.email,
         name: user.name,
-        role: user.isAdmin ? "admin" : "user",
-        roleId: user.roleId,
-        modules: user.modules || [],
+        role: dbIsAdmin ? "admin" : "user",
+        roleId: dbRoleId,
+        modules: dbModules,
         teamMemberId,
       },
     });
