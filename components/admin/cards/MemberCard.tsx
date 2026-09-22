@@ -206,7 +206,7 @@ export default function MemberCard({
 
   return (
     <>
-      <div className="w-[290px] rounded-lg overflow-hidden border border-border shadow-sm bg-card mb-4 relative group">
+      <div className="w-[290px] rounded-lg overflow-hidden border border-border shadow-sm bg-card relative group">
         {/* Edit button — visible on hover */}
         <button
           onClick={openEdit}
