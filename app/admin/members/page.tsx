@@ -283,13 +283,13 @@ export default function MembersPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-16 w-full">
+          <div className="space-y-8 w-full">
             {/* Active Members */}
             <div>
               <h3 className="text-2xl font-bold text-foreground mb-6 pl-4 border-l-4 border-primary">
                 Active Team Members
               </h3>
-              <div className="space-y-8 w-full">
+              <div className="space-y-4 w-full">
                 {(() => {
                   const grouped = filtered
                     .filter((m) => !m.isAlumni)
