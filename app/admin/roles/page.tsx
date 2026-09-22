@@ -133,7 +133,12 @@ export default function RolesPage() {
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-2">
+                      <Link href={`/admin/roles/edit/${role.id}`}>
+                        <Button variant="outline" size="sm">
+                          Edit
+                        </Button>
+                      </Link>
                       <Button 
                         variant="destructive" 
                         size="sm"

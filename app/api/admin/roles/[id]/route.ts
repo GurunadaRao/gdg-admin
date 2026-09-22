@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { db as adminDb } from "@/lib/firebase";
 
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await requireAdmin(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const userRoleSnapshot = await adminDb.collection("roles").doc(user.roleId || "").get();
+    const canManageRoles = userRoleSnapshot.exists && userRoleSnapshot.data()?.canManageRoles === true;
+    if (!canManageRoles) {
+      return NextResponse.json({ error: "Forbidden: Not enough permissions to manage roles" }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const roleSnapshot = await adminDb.collection("roles").doc(id).get();
+    
+    if (!roleSnapshot.exists) {
+      return NextResponse.json({ error: "Role not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ id: roleSnapshot.id, ...roleSnapshot.data() });
+  } catch (error) {
+    console.error("Error fetching role:", error);
+    return NextResponse.json({ error: "Failed to fetch role" }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAdmin(request);
