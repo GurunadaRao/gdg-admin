@@ -192,6 +192,10 @@ interface TeamMemberRole {
   dept_rank: number; // Department/position group rank
   dept_logo?: string; // Department icon URL
   isActive: boolean; // true for current roles, false for past/historical roles
+  startedAt?: string | null; // ISO date the role began
+  endedAt?: string | null; // ISO date the role ended (null while active)
+  note?: string; // optional remark
+  previousRoleId?: string | null; // role this one replaced (transfer / position change)
 }
 
 interface TeamMember {
@@ -203,6 +207,8 @@ interface TeamMember {
   linkedinUrl: string; // Full LinkedIn profile URL
   mail: string; // Email address
   isAlumni?: boolean; // Whether the member is from a previous batch
+  createdAt?: string; // ISO, set on create (older docs may lack it)
+  updatedAt?: string; // ISO, set on every change
   roles?: TeamMemberRole[]; // Array of roles (replaces root position/designation)
   
   // Legacy fields (deprecated in favor of roles array)
@@ -211,6 +217,29 @@ interface TeamMember {
   rank?: number;
   dept_rank?: number;
   dept_logo?: string;
+}
+```
+
+**Changing roles:** `roles` is changed only through `POST /api/admin/members/[id]/roles`
+(see `lib/team-members.ts`), never through the generic `PATCH`. Actions: `transfer`,
+`change-position`, `add`, `update`, `end`, `reactivate`, `remove`, `set-alumni`. Each runs in
+one transaction that also shifts the order of other members when a place is taken and
+re-orders a whole department when its `dept_rank` changes.
+
+**Subcollection `team_members/{id}/role_history/{entryId}`** — one entry per change:
+
+```typescript
+interface RoleHistoryEntry {
+  type: "joined" | "transferred" | "position_changed" | "edited" | "ended"
+      | "reactivated" | "removed" | "alumni_changed";
+  at: string; // when the change was made (ISO)
+  effectiveDate: string; // when it takes effect (ISO)
+  memberId: string;
+  memberName: string;
+  from: TeamMemberRole | null; // snapshot before
+  to: TeamMemberRole | null; // snapshot after
+  note: string;
+  by: { uid: string; email: string; name: string }; // admin who made the change
 }
 ```
 

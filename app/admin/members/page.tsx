@@ -367,6 +367,9 @@ export default function MembersPage() {
                           rank={m.rank}
                           dept_rank={m.dept_rank}
                           dept_logo={m.dept_logo}
+                          roles={m.roles}
+                          displayPosition={m.displayPosition}
+                          displayDesignation={m.displayDesignation}
                           onDelete={handleDelete}
                           onUpdate={handleUpdate}
                         />
@@ -410,6 +413,9 @@ export default function MembersPage() {
                                     rank={m.rank}
                                     dept_rank={m.dept_rank}
                                     dept_logo={m.dept_logo}
+                          roles={m.roles}
+                          displayPosition={m.displayPosition}
+                          displayDesignation={m.displayDesignation}
                                     isAlumni={m.isAlumni}
                                     onDelete={handleDelete}
                                     onUpdate={handleUpdate}
@@ -441,6 +447,9 @@ export default function MembersPage() {
                             rank={m.rank}
                             dept_rank={m.dept_rank}
                             dept_logo={m.dept_logo}
+                          roles={m.roles}
+                          displayPosition={m.displayPosition}
+                          displayDesignation={m.displayDesignation}
                             isAlumni={m.isAlumni}
                             onDelete={handleDelete}
                             onUpdate={handleUpdate}
@@ -538,6 +547,9 @@ export default function MembersPage() {
                                 rank={m.rank}
                                 dept_rank={m.dept_rank}
                                 dept_logo={m.dept_logo}
+                          roles={m.roles}
+                          displayPosition={m.displayPosition}
+                          displayDesignation={m.displayDesignation}
                                 isAlumni={m.isAlumni}
                                 onDelete={handleDelete}
                                 onUpdate={handleUpdate}
@@ -581,6 +593,9 @@ export default function MembersPage() {
                                           rank={m.rank}
                                           dept_rank={m.dept_rank}
                                           dept_logo={m.dept_logo}
+                          roles={m.roles}
+                          displayPosition={m.displayPosition}
+                          displayDesignation={m.displayDesignation}
                                           isAlumni={m.isAlumni}
                                           onDelete={handleDelete}
                                           onUpdate={handleUpdate}
@@ -612,6 +627,9 @@ export default function MembersPage() {
                                   rank={m.rank}
                                   dept_rank={m.dept_rank}
                                   dept_logo={m.dept_logo}
+                          roles={m.roles}
+                          displayPosition={m.displayPosition}
+                          displayDesignation={m.displayDesignation}
                                   isAlumni={m.isAlumni}
                                   onDelete={handleDelete}
                                   onUpdate={handleUpdate}

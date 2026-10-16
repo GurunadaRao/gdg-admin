@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
+import { requireAdmin } from "@/lib/auth";
+import { normalizeRoles, sanitizeRole } from "@/lib/team-members";
 
 // Disable caching so the response always reflects the latest Firestore data
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!(await requireAdmin(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const snapshot = await db
       .collection("team_members")
@@ -14,18 +19,8 @@ export async function GET() {
     const members = snapshot.docs.map((doc) => {
       const data = doc.data();
       
-      // Backwards compatibility: wrap legacy fields in a roles array if none exists
-      if (!data.roles) {
-        data.roles = [{
-          id: `legacy-${doc.id}`,
-          position: data.position || "",
-          designation: data.designation || "",
-          rank: data.rank || 0,
-          dept_rank: data.dept_rank || 0,
-          dept_logo: data.dept_logo || "",
-          isActive: true
-        }];
-      }
+      // Legacy documents have no roles[]: derive one from the flat fields.
+      data.roles = normalizeRoles(doc.id, data);
 
       return {
         ...data,
@@ -44,6 +39,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  if (!(await requireAdmin(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = await request.json();
 
@@ -78,6 +76,18 @@ export async function POST(request: NextRequest) {
         data[field] = body[field];
       }
     }
+
+    // Validate roles and stamp when each one started.
+    const now = new Date().toISOString();
+    if (Array.isArray(body.roles)) {
+      data.roles = body.roles.map((r: unknown) => {
+        const role = sanitizeRole(r);
+        if (!role.startedAt) role.startedAt = now;
+        return role;
+      });
+    }
+    data.createdAt = now;
+    data.updatedAt = now;
 
     const docRef = await db.collection("team_members").add(data);
     const newDoc = await docRef.get();

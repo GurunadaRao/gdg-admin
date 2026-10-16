@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { Mail, Linkedin, Pencil, X, Loader2, Save, Trash2, Upload } from "lucide-react";
+import MemberRolesManager from "@/components/admin/members/MemberRolesManager";
 
 export type TeamMemberRole = {
   id: string;
@@ -44,16 +45,11 @@ export default function MemberCard({
   imageUrl,
   name,
   designation,
-  position,
   linkedinUrl,
   mail,
   logo,
   bgColor,
-  rank,
-  dept_rank,
   isAlumni,
-  roles,
-  displayPosition,
   displayDesignation,
   onDelete,
   onUpdate,
@@ -65,6 +61,7 @@ export default function MemberCard({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [rolesChanged, setRolesChanged] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
@@ -74,14 +71,6 @@ export default function MemberCard({
     linkedinUrl: linkedinUrl || "",
     bgColor: bgColor || "",
     isAlumni: isAlumni ?? false,
-    roles: roles && roles.length > 0 ? [...roles] : [{
-      id: `legacy-${id}`,
-      position: position || "",
-      designation: designation || "",
-      rank: rank ?? 0,
-      dept_rank: dept_rank ?? 0,
-      isActive: true
-    }],
   });
 
   function openEdit() {
@@ -92,19 +81,23 @@ export default function MemberCard({
       linkedinUrl: linkedinUrl || "",
       bgColor: bgColor || "",
       isAlumni: isAlumni ?? false,
-      roles: roles && roles.length > 0 ? [...roles] : [{
-        id: `legacy-${id}`,
-        position: position || "",
-        designation: designation || "",
-        rank: rank ?? 0,
-        dept_rank: dept_rank ?? 0,
-        isActive: true
-      }],
-    });
+      });
     setSaved(false);
     setError(null);
     setConfirmDelete(false);
+    setRolesChanged(false);
     setEditOpen(true);
+  }
+
+  // Role changes can move this card to another department group, which would
+  // unmount the open dialog, so the page is refreshed only when it is closed.
+  function closeEdit() {
+    setEditOpen(false);
+    if (rolesChanged) {
+      setRolesChanged(false);
+      if (onUpdate) onUpdate();
+      else window.location.reload();
+    }
   }
 
   async function handleSave() {
@@ -137,29 +130,6 @@ export default function MemberCard({
 
   function handleChange(field: string, value: any) {
     setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function handleRoleChange(index: number, field: keyof TeamMemberRole, value: any) {
-    const newRoles = [...form.roles];
-    newRoles[index] = { ...newRoles[index], [field]: value };
-    setForm((prev) => ({ ...prev, roles: newRoles }));
-  }
-
-  function addRole() {
-    setForm((prev) => ({
-      ...prev,
-      roles: [
-        ...prev.roles,
-        {
-          id: `role-${Date.now()}`,
-          position: "",
-          designation: "",
-          rank: 0,
-          dept_rank: 0,
-          isActive: true
-        }
-      ]
-    }));
   }
 
   async function handleImageUpload(file: File) {
@@ -291,14 +261,14 @@ export default function MemberCard({
       {editOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setEditOpen(false)}
+          onClick={closeEdit}
         >
           <div
-            className="relative w-[90vw] max-w-3xl max-h-[90vh] bg-card rounded-lg shadow-xl overflow-y-auto"
+            className="relative w-[90vw] max-w-4xl max-h-[90vh] bg-card rounded-lg shadow-xl overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => setEditOpen(false)}
+              onClick={closeEdit}
               className="absolute top-3 right-3 z-10 p-1.5 rounded-md hover:bg-stone-100 transition-colors"
               aria-label="Close"
             >
@@ -374,80 +344,11 @@ export default function MemberCard({
                     type="url"
                   />
                   
-                  {/* Manage Roles Section */}
-                  <div className="pt-2 pb-2 border-t border-b border-border mt-4 mb-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-sm font-semibold text-foreground">Manage Roles</h3>
-                      <button type="button" onClick={addRole} className="text-xs bg-muted hover:bg-stone-200 text-stone-700 px-2 py-1 rounded border border-border">
-                        + Add Role
-                      </button>
-                    </div>
-                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-stone-300">
-                      {form.roles.map((role, idx) => (
-                        <div key={role.id} className={`p-3 rounded-md border ${role.isActive ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/30 opacity-70'}`}>
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Role {idx + 1}</span>
-                            <label className="flex items-center gap-1.5 cursor-pointer">
-                              <span className="text-xs text-stone-600">{role.isActive ? 'Active' : 'Inactive'}</span>
-                              <input 
-                                type="checkbox" 
-                                checked={role.isActive}
-                                onChange={(e) => handleRoleChange(idx, "isActive", e.target.checked)}
-                                className="w-3.5 h-3.5 rounded border-border" 
-                              />
-                            </label>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="text-[10px] font-medium text-stone-500">Department / Position</label>
-                                <input
-                                  type="text"
-                                  value={role.position}
-                                  onChange={(e) => handleRoleChange(idx, "position", e.target.value)}
-                                  className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                  placeholder="e.g. Web Dev"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[10px] font-medium text-stone-500">Designation</label>
-                                <input
-                                  type="text"
-                                  value={role.designation}
-                                  onChange={(e) => handleRoleChange(idx, "designation", e.target.value)}
-                                  className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                  placeholder="e.g. Lead"
-                                />
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="text-[10px] font-medium text-stone-500">Individual Rank</label>
-                                <input
-                                  type="number"
-                                  value={role.rank}
-                                  onChange={(e) => handleRoleChange(idx, "rank", parseInt(e.target.value) || 0)}
-                                  className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[10px] font-medium text-stone-500">Dept Rank</label>
-                                <input
-                                  type="number"
-                                  value={role.dept_rank}
-                                  onChange={(e) => handleRoleChange(idx, "dept_rank", parseInt(e.target.value) || 0)}
-                                  className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <MemberRolesManager
+                    memberId={id}
+                    onChanged={() => setRolesChanged(true)}
+                  />
 
-
-                  
                   <div className="flex items-center gap-2 mt-2">
                     <input
                       type="checkbox"
