@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
+import { requireAdmin } from "@/lib/auth";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!(await requireAdmin(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { id } = await params;
     const body = await request.json();
@@ -24,8 +28,10 @@ export async function PATCH(
       "rank",
       "dept_rank",
       "isAlumni",
-      "roles",
     ];
+    // `roles` is deliberately not editable here: it is changed only through
+    // /api/admin/members/[id]/roles so history is kept and a stale form can
+    // never overwrite it.
 
     const data: Record<string, unknown> = {};
     for (const field of allowedFields) {
@@ -65,9 +71,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!(await requireAdmin(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { id } = await params;
     const docRef = db.collection("team_members").doc(id);
